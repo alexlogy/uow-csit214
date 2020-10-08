@@ -1,0 +1,45 @@
+{% include 'header.html' %}
+    <!-- List Users -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2">Channels List</h1>
+    </div>
+    {% if message %}
+        <div class="alert alert-{{ alert_type }}" role="alert">
+          {{ message }}
+        </div>
+    {% endif %}
+    <table class="table">
+      <thead>
+        <tr>
+            <th scope="col">ID #</th>
+            <th scope="col">Name</th>
+            <th scope="col">Date</th>
+            <th scope="col">Start Time (24HR)</th>
+            <th scope="col">End Time (24HR)</th>
+            <th scope="col">Capacity</th>
+            <th scope="col">Created By</th>
+            <th scope="col">Created Date</th>
+            <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {%  for channel in channels_list %}
+            <tr>
+                <th scope="row">{{ channel['_id'] }}</th>
+                <td>{{ channel['channelname'] }}</td>
+                <td>{{ channel['channeldate'] }}</td>
+                <td>{{ channel['starttime'] }}</td>
+                <td>{{ channel['endtime'] }}</td>
+                <td>{{ channel['capacity'] }}</td>
+                <td>{{ channel['created_by'] }}</td>
+                <td>{{ channel['created_datetime'] }}</td>
+                <td>
+                    <a class="btn btn-warning btn-sm" href="/channels/edit/{{ channel['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Edit</a>
+                    <a class="btn btn-danger btn-sm" href="/channels/delete/{{ channel['_id'] }}" role="button"><img src="/static/icons/trash.svg" alt="" width="16" height="16" title="Bootstrap"> Delete</a>
+                </td>
+            </tr>
+
+        {%  endfor %}
+      </tbody>
+    </table>
+{% include 'footer.html' %}

@@ -1,0 +1,46 @@
+{% include 'header.html' %}
+
+
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2">Edit Channel</h1>
+    </div>
+    {% if message %}
+        <div class="alert alert-{{ alert_type }}" role="alert">
+          {{ message }}
+        </div>
+    {% endif %}
+    <form action="" method="post" id="channel-creation">
+        <div class="form-group">
+            <label for="channelID">User ID</label>
+            <input type="text" readOnly name="channelID" readonly class="form-control" id="channelID" aria-describedby="channelIDHelp" value="{{ channel['_id'] }}">
+            <small id="channelIDHelp" class="form-text text-muted">Channel ID</small>
+        </div>
+        <div class="form-group">
+            <label for="channelname">Channel Name</label>
+            <input type="text" name="channelname" class="form-control" id="channelname" aria-describedby="channelnameHelp" value="{{ channel['channelname'] }}">
+            <small id="channelnameHelp" class="form-text text-muted">Channel Name</small>
+        </div>
+        <div class="form-group">
+            <label for="channeldate">Date</label>
+            <input type="text" name="channeldate" class="form-control" id="channeldate" aria-describedby="channeldateHelp" value="{{ channel['channeldate'] }}">
+            <small id="channeldateHelp" class="form-text text-muted">Date of this channel</small>
+        </div>
+        <div class="form-group">
+            <label for="starttime">Start Time (24Hrs Format: HHHH)</label>
+            <input type="number" name="starttime" class="form-control" id="starttime" aria-describedby="starttimeHelp" value="{{ channel['starttime'] }}">
+            <small id="starttimeHelp" class="form-text text-muted">Start Time for this channel</small>
+        </div>
+        <div class="form-group">
+            <label for="endtime">End Time (24Hrs Format: HHHH)</label>
+            <input type="number" name="endtime" class="form-control" id="endtime" aria-describedby="endtimeHelp" value="{{ channel['endtime'] }}">
+            <small id="endtimeHelp" class="form-text text-muted">End Time for this channel</small>
+        </div>
+
+        <div class="form-group">
+            <label for="capacity">Channel Capacity</label>
+            <input type="number" name="capacity" class="form-control" id="capacity" aria-describedby="capacityHelp" value="{{ channel['capacity'] }}">
+            <small id="capacityHelp" class="form-text text-muted">Channel Capacity</small>
+        </div>
+        <button type="submit" class="btn btn-primary" id="channel-submit-btn">Submit</button>
+    </form>
+{% include 'footer.html' %}
