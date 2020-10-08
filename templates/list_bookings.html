@@ -1,0 +1,50 @@
+{% include 'header.html' %}
+    <!-- List Users -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2">Sessions List</h1>
+    </div>
+    {% if message %}
+        <div class="alert alert-{{ alert_type }}" role="alert">
+          {{ message }}
+        </div>
+    {% endif %}
+    <table class="table">
+      <thead>
+        <tr>
+            <th scope="col">ID #</th>
+            <th scope="col">Channel Name</th>
+            <th scope="col">Date</th>
+            <th scope="col">Start Time</th>
+            <th scope="col">End Time</th>
+            <th scope="col">Capacity</th>
+            <th scope="col">Status</th>
+            <th scope="col">Booked Date</th>
+            <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {%  for session_details in sessions_list %}
+            <tr>
+                <th scope="row">{{ session_details['_id'] }}</th>
+                <td>{{ session_details['channel_info'][0]['channelname'] }}</td>
+                <td>{{ session_details['channel_info'][0]['channeldate'] }}</td>
+                <td>{{ session_details['channel_info'][0]['starttime'] }}HRS</td>
+                <td>{{ session_details['channel_info'][0]['endtime'] }}HRS</td>
+                <td>{{ session_details['channel_info'][0]['capacity'] }}</td>
+                {% if session_details['status'] == 'Booked' %}
+                    {% set badgetype = 'success' %}
+                {% elif session_details['status'] == 'Canceled' %}
+                    {% set badgetype = 'danger' %}
+                {% endif %}
+                <td><span class="badge badge-{{ badgetype }}">{{ session_details['status'] }}</span></td>
+                <td>{{ session_details['modified_datetime'] }}</td>
+                <td>
+                    <a class="btn btn-warning btn-sm" href="/channels/edit/{{ session_details['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Edit</a>
+                    <a class="btn btn-danger btn-sm" href="/channels/delete/{{ session_details['_id'] }}" role="button"><img src="/static/icons/trash.svg" alt="" width="16" height="16" title="Bootstrap"> Cancel</a>
+                </td>
+            </tr>
+
+        {%  endfor %}
+      </tbody>
+    </table>
+{% include 'footer.html' %}

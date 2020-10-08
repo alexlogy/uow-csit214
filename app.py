@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import Flask, request, redirect, url_for, render_template, session
 from flask_pymongo import PyMongo, ObjectId
-from datetime import datetime
+import datetime
 import hashlib
 
 
@@ -40,7 +40,7 @@ def create_demoadmin():
     username = 'superadmin'
     password = '1234'
 
-    now = datetime.now()
+    now = datetime.datetime.now()
     created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
 
     password = hashlib.md5(password.encode('utf-8')).hexdigest()
@@ -63,7 +63,7 @@ def create_demostudent():
     username = 'demostudent'
     password = '1234'
 
-    now = datetime.now()
+    now = datetime.datetime.now()
     created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
 
     password = hashlib.md5(password.encode('utf-8')).hexdigest()
@@ -149,7 +149,7 @@ def change_password():
                 alert_type = 'info'
                 return redirect(url_for('dashboard', message=message, alert_type=alert_type))
 
-            now = datetime.now()
+            now = datetime.datetime.now()
             modified_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
             modified_by = session['username']
 
@@ -181,6 +181,61 @@ def dashboard(message='', alert_type=''):
 
 
 '''
+Sessions
+'''
+@app.route('/sessions/list-bookings')
+@auth_required
+def list_bookings(message='', alert_type=''):
+        if request.args.get('message') and request.args.get('alert_type'):
+            message = request.args.get('message')
+            alert_type = request.args.get('alert_type')
+
+        sessions_list = mongo.db.sessions.aggregate([
+            {
+                "$lookup": {
+                    "from": "channels",
+                    "localField": "channelid",
+                    "foreignField": "_id",
+                    "as": "channel_info"
+                }
+            }
+        ])
+        return render_template('list_bookings.html', message=message, alert_type=alert_type, sessions_list=sessions_list)
+
+@app.route('/sessions/book/<channelid>')
+@auth_required
+def book_sessions(channelid, message='', alert_type=''):
+        if request.args.get('message') and request.args.get('alert_type'):
+            message = request.args.get('message')
+            alert_type = request.args.get('alert_type')
+
+        now = datetime.datetime.now()
+        created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+        booked_by = session['username']
+
+        session_details = {
+            "channelid": ObjectId(channelid),
+            "status": "Booked",
+            "booked_by": booked_by,
+            "created_datetime": created_datetime,
+            "modified_datetime": created_datetime
+        }
+        results = mongo.db.sessions.insert_one(session_details)
+        message = 'Successfully created session (id: %s)' % results.inserted_id
+        alert_type = 'success'
+        return redirect(url_for('list_bookings', message=message, alert_type=alert_type))
+
+        # channel_details = mongo.db.channels.find_one({"_id": ObjectId(channelid)})
+        # capacity_check = mongo.db.sessions.aggregate([
+        #     { "$match": { "channelid": channelid } },
+        #     { "$group": { "_id": "null", "n": { "$sum": 1 } }}
+        # ])
+        # print (capacity_check.__dict__)
+        #
+        #
+        # return render_template('list_sessions.html', message=message, alert_type=alert_type)
+
+'''
 Channels
 '''
 @app.route('/channels/list')
@@ -190,7 +245,16 @@ def list_channels(message='', alert_type=''):
             message = request.args.get('message')
             alert_type = request.args.get('alert_type')
 
-        channel_list = mongo.db.channels.find()
+        if session['role'] == 'Student':
+            today_date = datetime.date.today().strftime("%d/%m/%Y")
+            search_range = {
+                "channeldate": {
+                "$gte": today_date
+                }
+            }
+            channel_list = mongo.db.channels.find(search_range)
+        else:
+            channel_list = mongo.db.channels.find()
         return render_template('list_channels.html', message=message, alert_type=alert_type, channels_list=channel_list)
 
 
@@ -221,7 +285,7 @@ def create_channel(message='', alert_type=''):
 
                 if (endtime > starttime):
                     if (isinstance(capacity, int) and (capacity > 0)):
-                        now = datetime.now()
+                        now = datetime.datetime.now()
                         created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
                         created_by = session['username']
 
@@ -281,7 +345,7 @@ def edit_channel(channelid, message='', alert_type=''):
 
                 if (endtime > starttime):
                     if (isinstance(capacity, int) and (capacity > 0)):
-                        now = datetime.now()
+                        now = datetime.datetime.now()
                         modified_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
                         modified_by = session['username']
 
@@ -361,7 +425,7 @@ def create_user():
             password = request.form.get('password')
 
             if role and fullname and username and password:
-                now = datetime.now()
+                now = datetime.datetime.now()
                 created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
                 created_by = session['username']
 
@@ -404,7 +468,7 @@ def edit_user(userid):
                 else:
                     password = user_details['password']
 
-                now = datetime.now()
+                now = datetime.datetime.now()
                 modified_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
                 modified_by = session['username']
 

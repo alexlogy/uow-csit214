@@ -12,11 +12,12 @@
       <thead>
         <tr>
             <th scope="col">ID #</th>
-            <th scope="col">Name</th>
+            <th scope="col">Channel Name</th>
             <th scope="col">Date</th>
-            <th scope="col">Start Time (24HR)</th>
-            <th scope="col">End Time (24HR)</th>
-            <th scope="col">Capacity</th>
+            <th scope="col">Start Time</th>
+            <th scope="col">End Time</th>
+            <th scope="col">Total Booking</th>
+            <th scope="col">Total Capacity</th>
             <th scope="col">Created By</th>
             <th scope="col">Created Date</th>
             <th scope="col">Actions</th>
@@ -28,14 +29,19 @@
                 <th scope="row">{{ channel['_id'] }}</th>
                 <td>{{ channel['channelname'] }}</td>
                 <td>{{ channel['channeldate'] }}</td>
-                <td>{{ channel['starttime'] }}</td>
-                <td>{{ channel['endtime'] }}</td>
+                <td>{{ channel['starttime'] }}HRS</td>
+                <td>{{ channel['endtime'] }}HRS</td>
+                <td>{{ channel['capacity'] }}</td>
                 <td>{{ channel['capacity'] }}</td>
                 <td>{{ channel['created_by'] }}</td>
                 <td>{{ channel['created_datetime'] }}</td>
                 <td>
-                    <a class="btn btn-warning btn-sm" href="/channels/edit/{{ channel['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Edit</a>
-                    <a class="btn btn-danger btn-sm" href="/channels/delete/{{ channel['_id'] }}" role="button"><img src="/static/icons/trash.svg" alt="" width="16" height="16" title="Bootstrap"> Delete</a>
+                    {%  if session['role'] == 'Staff' %}
+                        <a class="btn btn-warning btn-sm" href="/channels/edit/{{ channel['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Edit</a>
+                        <a class="btn btn-danger btn-sm" href="/channels/delete/{{ channel['_id'] }}" role="button"><img src="/static/icons/trash.svg" alt="" width="16" height="16" title="Bootstrap"> Delete</a>
+                    {%  else %}
+                        <a class="btn btn-success btn-sm" href="/sessions/book/{{ channel['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Book</a>
+                    {% endif %}
                 </td>
             </tr>
 
