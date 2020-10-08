@@ -1,18 +1,83 @@
-from flask import Flask, request, redirect, url_for, render_template
+from functools import wraps
+from flask import Flask, request, redirect, url_for, render_template, session
 from flask_pymongo import PyMongo, ObjectId
+from datetime import datetime
 import hashlib
 
+
 app = Flask(__name__)
+app.secret_key = 'citybois'
+
 app.config["MONGO_URI"] = "mongodb://localhost:27017/cityboys"
 
 mongo = PyMongo(app)
 
-@app.route('/')
-def dashboard():
-    return render_template('dashboard.html')
+# datetime object containing current date and time
+now = datetime.now()
+
+def auth_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in session:
+            message = 'Please authenticate first!'
+            alert_type = 'danger'
+            return redirect(url_for('login', next=request.url, message=message, alert_type=alert_type))
+        else:
+            return f(*args, **kwargs)
+    return decorated_function
+
+
+def create_demoadmin():
+    role = 'staff'
+    fullname = 'Super Admin'
+    username = 'superadmin'
+    password = '1234'
+    created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+
+    password = hashlib.md5(password.encode('utf-8')).hexdigest()
+    user = {
+        "role": role,
+        "fullname": fullname,
+        "username": username,
+        "password": password,
+        "created_by": "system",
+        "created_datetime": created_datetime
+    }
+    results = mongo.db.users.insert_one(user)
+    print ('Created User superadmin (id: %s)' % results.inserted_id)
+
+
+def create_demostudent():
+    role = 'student'
+    fullname = 'Demo Student'
+    username = 'demostudent'
+    password = '1234'
+    created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+
+    password = hashlib.md5(password.encode('utf-8')).hexdigest()
+    user = {
+        "role": role,
+        "fullname": fullname,
+        "username": username,
+        "password": password,
+        "created_by": "system",
+        "created_datetime": created_datetime
+    }
+    results = mongo.db.users.insert_one(user)
+    print ('Created User demostudent (id: %s)' % results.inserted_id)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    '''
+    For Demo sake
+    '''
+    superadmin = mongo.db.users.find_one({"username": "superadmin"})
+    demostudent = mongo.db.users.find_one({"username": "demostudent"})
+    if superadmin is None:
+        create_demoadmin()
+    if demostudent is None:
+        create_demostudent()
+
     message = ''
     alert_type = ''
     if request.method == 'POST':
@@ -25,6 +90,9 @@ def login():
             if user_details:
                 password = hashlib.md5(password.encode('utf-8')).hexdigest()
                 if user_details['password'] == password:
+                    session['role'] = user_details['role']
+                    session['fullname'] = user_details['fullname']
+                    session['username'] = username
                     return redirect(url_for('dashboard'))
             else:
                 message = 'Incorrect username or password!'
@@ -36,7 +104,26 @@ def login():
             return render_template('login.html', message=message, alert_type=alert_type)
     return render_template('login.html')
 
+
+@app.route('/logout')
+def logout():
+    '''
+    Unset Sessions
+    '''
+    session.pop('role')
+    session.pop('fullname')
+    session.pop('username')
+
+    return redirect(url_for('login'))
+
+@app.route('/')
+@auth_required
+def dashboard():
+    return render_template('dashboard.html')
+
+
 @app.route('/users/list')
+@auth_required
 def list_users(message='', alert_type=''):
         if request.args.get('message') and request.args.get('alert_type'):
             message = request.args.get('message')
@@ -46,6 +133,7 @@ def list_users(message='', alert_type=''):
         return render_template('list_users.html', message=message, alert_type=alert_type, users_list=users_list)
 
 @app.route('/users/create', methods=['GET', 'POST'])
+@auth_required
 def create_user():
         message = ''
         alert_type = ''
@@ -73,6 +161,7 @@ def create_user():
         return render_template('create_user.html', message=message, alert_type=alert_type)
 
 @app.route('/users/edit/<userid>', methods=['GET', 'POST'])
+@auth_required
 def edit_user(userid):
         message = ''
         alert_type = ''
@@ -111,6 +200,7 @@ def edit_user(userid):
         return render_template('edit_user.html', message=message, alert_type=alert_type, user=user_details)
 
 @app.route('/users/delete/<userid>', methods=['GET', 'POST'])
+@auth_required
 def delete_user(userid):
         message = ''
         alert_type = ''
