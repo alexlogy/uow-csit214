@@ -405,17 +405,23 @@ def edit_channel(channelid, message='', alert_type=''):
                         modified_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
                         modified_by = session['username']
 
-                        channel = {
-                            "channelname": channelname,
-                            "channeldate": channeldate,
-                            "starttime": starttime,
-                            "endtime": endtime,
-                            "capacity": capacity,
-                            "modified_by": modified_by,
-                            "modified_datetime": modified_datetime
+                        channel_id = {
+                            "_id": ObjectId(channelid)
                         }
-                        results = mongo.db.channels.insert_one(channel)
-                        message = 'Successfully edited channel (id: %s)' % results.inserted_id
+
+                        channel = {
+                            "$set": {
+                                "channelname": channelname,
+                                "channeldate": channeldate,
+                                "starttime": starttime,
+                                "endtime": endtime,
+                                "capacity": capacity,
+                                "modified_by": modified_by,
+                                "modified_datetime": modified_datetime
+                            }
+                        }
+                        results = mongo.db.channels.find_one_and_update(channel_id, channel)
+                        message = 'Successfully edited channel (id: %s)' % results['_id']
                         alert_type = 'success'
                         return redirect(url_for('list_channels', message=message, alert_type=alert_type))
                     else:
