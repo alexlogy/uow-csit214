@@ -16,8 +16,8 @@
             <th scope="col">Date</th>
             <th scope="col">Start Time</th>
             <th scope="col">End Time</th>
-            <th scope="col">Channel Capacity</th>
             <th scope="col">Status</th>
+            <th scope="col">Booked By</th>
             <th scope="col">Booked Date</th>
             <th scope="col">Actions</th>
         </tr>
@@ -30,18 +30,18 @@
                 <td>{{ session_details['channel_info'][0]['channeldate'] }}</td>
                 <td>{{ session_details['channel_info'][0]['starttime'] }}hrs</td>
                 <td>{{ session_details['channel_info'][0]['endtime'] }}hrs</td>
-                <td>{{ session_details['channel_info'][0]['capacity'] }}</td>
                 {% if session_details['status'] == 'Booked' %}
                     {% set badgetype = 'success' %}
                 {% elif session_details['status'] == 'Canceled' %}
                     {% set badgetype = 'danger' %}
                 {% endif %}
                 <td><span class="badge badge-{{ badgetype }}">{{ session_details['status'] }}</span></td>
+                <td>{{ session_details['booked_by'] }}</td>
                 <td>{{ session_details['modified_datetime'] }}</td>
                 <td>
-                    {% if session_details['status'] == 'Canceled' %}
+                    {% if (session_details['status'] == 'Canceled' and session['role'] == 'Student') %}
                         <a class="btn btn-warning btn-sm" href="/sessions/book/{{ session_details['channel_info'][0]['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Re-book</a>
-                    {%  else  %}
+                    {%  elif (session_details['status'] == 'Booked')  %}
                         <a class="btn btn-danger btn-sm" href="/sessions/cancel/{{ session_details['_id'] }}" role="button"><img src="/static/icons/trash.svg" alt="" width="16" height="16" title="Bootstrap"> Cancel</a>
                     {%  endif %}
                 </td>

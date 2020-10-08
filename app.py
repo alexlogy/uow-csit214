@@ -190,21 +190,33 @@ def list_bookings(message='', alert_type=''):
             message = request.args.get('message')
             alert_type = request.args.get('alert_type')
 
-        sessions_list = mongo.db.sessions.aggregate([
-            {
-              "$match": {
-                  "booked_by": session['username']
-              }
-            },
-            {
-                "$lookup": {
-                    "from": "channels",
-                    "localField": "channelid",
-                    "foreignField": "_id",
-                    "as": "channel_info"
+        if session['role'] == 'Student':
+            sessions_list = mongo.db.sessions.aggregate([
+                {
+                  "$match": {
+                      "booked_by": session['username']
+                  }
+                },
+                {
+                    "$lookup": {
+                        "from": "channels",
+                        "localField": "channelid",
+                        "foreignField": "_id",
+                        "as": "channel_info"
+                    }
                 }
-            }
-        ])
+            ])
+        else:
+            sessions_list = mongo.db.sessions.aggregate([
+                {
+                    "$lookup": {
+                        "from": "channels",
+                        "localField": "channelid",
+                        "foreignField": "_id",
+                        "as": "channel_info"
+                    }
+                }
+            ])
 
         return render_template('list_bookings.html', message=message, alert_type=alert_type, sessions_list=sessions_list)
 
@@ -257,6 +269,7 @@ def cancel_session(sessionid):
     session_params = {
         "$set": {
             "status": 'Canceled',
+            "canceled_by": session['username'],
             "modified_datetime": modified_datetime
         }
     }
@@ -284,20 +297,20 @@ def list_channels(message='', alert_type=''):
                 }
             }
             channel_list = mongo.db.channels.find(search_range)
-            sessions_list = mongo.db.sessions.find()
-
-            booking_dict = {}
-            for session_detail in sessions_list:
-                booking_count = mongo.db.sessions.find(
-                    {
-                        "channelid": session_detail['channelid'],
-                        "status": "Booked"
-                    }
-                ).count()
-                booking_dict[session_detail['channelid']] = booking_count
-                print (booking_dict)
         else:
             channel_list = mongo.db.channels.find()
+
+        sessions_list = mongo.db.sessions.find()
+
+        booking_dict = {}
+        for session_detail in sessions_list:
+            booking_count = mongo.db.sessions.find(
+                {
+                    "channelid": session_detail['channelid'],
+                    "status": "Booked"
+                }
+            ).count()
+            booking_dict[session_detail['channelid']] = booking_count
         return render_template('list_channels.html', message=message, alert_type=alert_type, channels_list=channel_list, booking_dict=booking_dict)
 
 
