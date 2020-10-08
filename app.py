@@ -192,6 +192,11 @@ def list_bookings(message='', alert_type=''):
 
         sessions_list = mongo.db.sessions.aggregate([
             {
+              "$match": {
+                  "booked_by": session['username']
+              }
+            },
+            {
                 "$lookup": {
                     "from": "channels",
                     "localField": "channelid",
