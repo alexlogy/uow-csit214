@@ -235,22 +235,35 @@ def book_session(channelid, message='', alert_type=''):
             }
         ).count()
 
-        if (booking_count < channel_details['capacity']):
-            now = datetime.datetime.now()
-            created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
-            booked_by = session['username']
-
-            session_details = {
+        student_bookcheck = mongo.db.sessions.find(
+            {
                 "channelid": ObjectId(channelid),
-                "status": "Booked",
-                "booked_by": booked_by,
-                "created_datetime": created_datetime,
-                "modified_datetime": created_datetime
+                "booked_by": session['username'],
+                "status": "Booked"
             }
-            results = mongo.db.sessions.insert_one(session_details)
-            message = 'Successfully created session (session id: %s)' % results.inserted_id
-            alert_type = 'success'
-            return redirect(url_for('list_bookings', message=message, alert_type=alert_type))
+        ).count()
+
+        if (booking_count < channel_details['capacity']):
+            if (student_bookcheck < 1):
+                now = datetime.datetime.now()
+                created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+                booked_by = session['username']
+
+                session_details = {
+                    "channelid": ObjectId(channelid),
+                    "status": "Booked",
+                    "booked_by": booked_by,
+                    "created_datetime": created_datetime,
+                    "modified_datetime": created_datetime
+                }
+                results = mongo.db.sessions.insert_one(session_details)
+                message = 'Successfully created session (session id: %s)' % results.inserted_id
+                alert_type = 'success'
+                return redirect(url_for('list_bookings', message=message, alert_type=alert_type))
+            else:
+                message = 'You have already booked! Please choose another channel to book! (channel id: %s)' % channelid
+                alert_type = 'danger'
+                return redirect(url_for('list_channels', message=message, alert_type=alert_type))
         else:
             message = 'Session is fully booked! Please choose another channel! (channel id: %s)' % channelid
             alert_type = 'danger'
