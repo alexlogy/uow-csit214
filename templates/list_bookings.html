@@ -16,7 +16,7 @@
             <th scope="col">Date</th>
             <th scope="col">Start Time</th>
             <th scope="col">End Time</th>
-            <th scope="col">Capacity</th>
+            <th scope="col">Channel Capacity</th>
             <th scope="col">Status</th>
             <th scope="col">Booked Date</th>
             <th scope="col">Actions</th>
@@ -28,8 +28,8 @@
                 <th scope="row">{{ session_details['_id'] }}</th>
                 <td>{{ session_details['channel_info'][0]['channelname'] }}</td>
                 <td>{{ session_details['channel_info'][0]['channeldate'] }}</td>
-                <td>{{ session_details['channel_info'][0]['starttime'] }}HRS</td>
-                <td>{{ session_details['channel_info'][0]['endtime'] }}HRS</td>
+                <td>{{ session_details['channel_info'][0]['starttime'] }}hrs</td>
+                <td>{{ session_details['channel_info'][0]['endtime'] }}hrs</td>
                 <td>{{ session_details['channel_info'][0]['capacity'] }}</td>
                 {% if session_details['status'] == 'Booked' %}
                     {% set badgetype = 'success' %}
@@ -39,8 +39,11 @@
                 <td><span class="badge badge-{{ badgetype }}">{{ session_details['status'] }}</span></td>
                 <td>{{ session_details['modified_datetime'] }}</td>
                 <td>
-                    <a class="btn btn-warning btn-sm" href="/channels/edit/{{ session_details['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Edit</a>
-                    <a class="btn btn-danger btn-sm" href="/channels/delete/{{ session_details['_id'] }}" role="button"><img src="/static/icons/trash.svg" alt="" width="16" height="16" title="Bootstrap"> Cancel</a>
+                    {% if session_details['status'] == 'Canceled' %}
+                        <a class="btn btn-warning btn-sm" href="/sessions/book/{{ session_details['channel_info'][0]['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Re-book</a>
+                    {%  else  %}
+                        <a class="btn btn-danger btn-sm" href="/sessions/cancel/{{ session_details['_id'] }}" role="button"><img src="/static/icons/trash.svg" alt="" width="16" height="16" title="Bootstrap"> Cancel</a>
+                    {%  endif %}
                 </td>
             </tr>
 

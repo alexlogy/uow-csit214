@@ -205,40 +205,66 @@ def list_bookings(message='', alert_type=''):
                 }
             }
         ])
+
         return render_template('list_bookings.html', message=message, alert_type=alert_type, sessions_list=sessions_list)
 
 @app.route('/sessions/book/<channelid>')
 @auth_required
-def book_sessions(channelid, message='', alert_type=''):
+def book_session(channelid, message='', alert_type=''):
         if request.args.get('message') and request.args.get('alert_type'):
             message = request.args.get('message')
             alert_type = request.args.get('alert_type')
 
-        now = datetime.datetime.now()
-        created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
-        booked_by = session['username']
+        channel_details = mongo.db.channels.find_one({"_id": ObjectId(channelid)})
+        booking_count = mongo.db.sessions.find(
+            {
+                "channelid": ObjectId(channelid),
+                "status": "Booked"
+            }
+        ).count()
 
-        session_details = {
-            "channelid": ObjectId(channelid),
-            "status": "Booked",
-            "booked_by": booked_by,
-            "created_datetime": created_datetime,
-            "modified_datetime": created_datetime
+        if (booking_count < channel_details['capacity']):
+            now = datetime.datetime.now()
+            created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+            booked_by = session['username']
+
+            session_details = {
+                "channelid": ObjectId(channelid),
+                "status": "Booked",
+                "booked_by": booked_by,
+                "created_datetime": created_datetime,
+                "modified_datetime": created_datetime
+            }
+            results = mongo.db.sessions.insert_one(session_details)
+            message = 'Successfully created session (session id: %s)' % results.inserted_id
+            alert_type = 'success'
+            return redirect(url_for('list_bookings', message=message, alert_type=alert_type))
+        else:
+            message = 'Session is fully booked! Please choose another channel! (channel id: %s)' % channelid
+            alert_type = 'danger'
+            return redirect(url_for('list_channels', message=message, alert_type=alert_type))
+
+@app.route('/sessions/cancel/<sessionid>')
+@auth_required
+def cancel_session(sessionid):
+    session_detail = mongo.db.sessions.find_one({"_id": ObjectId(sessionid)})
+    now = datetime.datetime.now()
+    modified_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+
+    session_id = {
+        "_id": ObjectId(sessionid)
+    }
+    session_params = {
+        "$set": {
+            "status": 'Canceled',
+            "modified_datetime": modified_datetime
         }
-        results = mongo.db.sessions.insert_one(session_details)
-        message = 'Successfully created session (id: %s)' % results.inserted_id
-        alert_type = 'success'
-        return redirect(url_for('list_bookings', message=message, alert_type=alert_type))
+    }
+    results = mongo.db.sessions.find_one_and_update(session_id, session_params)
+    message = 'Successfully canceled booking (id: %s)' % results['_id']
+    alert_type = 'success'
+    return redirect(url_for('list_bookings', message=message, alert_type=alert_type))
 
-        # channel_details = mongo.db.channels.find_one({"_id": ObjectId(channelid)})
-        # capacity_check = mongo.db.sessions.aggregate([
-        #     { "$match": { "channelid": channelid } },
-        #     { "$group": { "_id": "null", "n": { "$sum": 1 } }}
-        # ])
-        # print (capacity_check.__dict__)
-        #
-        #
-        # return render_template('list_sessions.html', message=message, alert_type=alert_type)
 
 '''
 Channels
@@ -258,9 +284,21 @@ def list_channels(message='', alert_type=''):
                 }
             }
             channel_list = mongo.db.channels.find(search_range)
+            sessions_list = mongo.db.sessions.find()
+
+            booking_dict = {}
+            for session_detail in sessions_list:
+                booking_count = mongo.db.sessions.find(
+                    {
+                        "channelid": session_detail['channelid'],
+                        "status": "Booked"
+                    }
+                ).count()
+                booking_dict[session_detail['channelid']] = booking_count
+                print (booking_dict)
         else:
             channel_list = mongo.db.channels.find()
-        return render_template('list_channels.html', message=message, alert_type=alert_type, channels_list=channel_list)
+        return render_template('list_channels.html', message=message, alert_type=alert_type, channels_list=channel_list, booking_dict=booking_dict)
 
 
 @app.route('/channels/create', methods=['GET', 'POST'])
