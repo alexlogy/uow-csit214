@@ -39,6 +39,8 @@ def create_demoadmin():
     fullname = 'Super Admin'
     username = 'superadmin'
     password = '1234'
+
+    now = datetime.now()
     created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
 
     password = hashlib.md5(password.encode('utf-8')).hexdigest()

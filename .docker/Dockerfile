@@ -29,4 +29,4 @@ RUN apt update \
 EXPOSE 5000
 
 # Container starting command
-ENTRYPOINT flask run
+ENTRYPOINT flask run --host='0.0.0.0'
