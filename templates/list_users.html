@@ -15,6 +15,10 @@
             <th scope="col">Name</th>
             <th scope="col">Username</th>
             <th scope="col">Role</th>
+            <th scope="col">Created By</th>
+            <th scope="col">Created Time</th>
+            <th scope="col">Modified By</th>
+            <th scope="col">Modified Time</th>
             <th scope="col">Actions</th>
         </tr>
       </thead>
@@ -25,6 +29,10 @@
                 <td>{{ user['fullname'] }}</td>
                 <td>{{ user['username'] }}</td>
                 <td>{{ user['role'] }}</td>
+                <td>{{ user['created_by'] }}</td>
+                <td>{{ user['created_datetime'] }}</td>
+                <td>{{ user['modified_by'] }}</td>
+                <td>{{ user['modified_datetime'] }}</td>
                 <td>
                     <a class="btn btn-warning btn-sm" href="/users/edit/{{ user['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Edit</a>
                     <a class="btn btn-danger btn-sm" href="/users/delete/{{ user['_id'] }}" role="button"><img src="/static/icons/trash.svg" alt="" width="16" height="16" title="Bootstrap"> Delete</a>

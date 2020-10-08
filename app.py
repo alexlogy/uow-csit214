@@ -12,9 +12,6 @@ app.config["MONGO_URI"] = "mongodb://localhost:27017/cityboys"
 
 mongo = PyMongo(app)
 
-# datetime object containing current date and time
-now = datetime.now()
-
 def auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -41,7 +38,8 @@ def create_demoadmin():
         "username": username,
         "password": password,
         "created_by": "system",
-        "created_datetime": created_datetime
+        "created_datetime": created_datetime,
+        "modified_datetime": created_datetime
     }
     results = mongo.db.users.insert_one(user)
     print ('Created User superadmin (id: %s)' % results.inserted_id)
@@ -52,6 +50,8 @@ def create_demostudent():
     fullname = 'Demo Student'
     username = 'demostudent'
     password = '1234'
+
+    now = datetime.now()
     created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
 
     password = hashlib.md5(password.encode('utf-8')).hexdigest()
@@ -61,7 +61,8 @@ def create_demostudent():
         "username": username,
         "password": password,
         "created_by": "system",
-        "created_datetime": created_datetime
+        "created_datetime": created_datetime,
+        "modified_datetime": created_datetime
     }
     results = mongo.db.users.insert_one(user)
     print ('Created User demostudent (id: %s)' % results.inserted_id)
@@ -90,6 +91,7 @@ def login():
             if user_details:
                 password = hashlib.md5(password.encode('utf-8')).hexdigest()
                 if user_details['password'] == password:
+                    session['id'] = str(user_details['_id'])
                     session['role'] = user_details['role']
                     session['fullname'] = user_details['fullname']
                     session['username'] = username
@@ -144,12 +146,19 @@ def create_user():
             password = request.form.get('password')
 
             if role and fullname and username and password:
+                now = datetime.now()
+                created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+                created_by = session['username']
+
                 password = hashlib.md5(password.encode('utf-8')).hexdigest()
                 user = {
                     "role": role,
                     "fullname": fullname,
                     "username": username,
-                    "password": password
+                    "password": password,
+                    "created_by": created_by,
+                    "created_datetime": created_datetime,
+                    "modified_datetime": created_datetime
                 }
                 results = mongo.db.users.insert_one(user)
                 message = 'Successfully created user (id: %s)' % results.inserted_id
@@ -179,6 +188,10 @@ def edit_user(userid):
                 else:
                     password = user_details['password']
 
+                now = datetime.now()
+                modified_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+                modified_by = session['username']
+
                 user_id = {
                     "_id": ObjectId(userid)
                 }
@@ -187,7 +200,9 @@ def edit_user(userid):
                         "role": role,
                         "fullname": fullname,
                         "username": username,
-                        "password": password
+                        "password": password,
+                        "modified_by": modified_by,
+                        "modified_datetime": modified_datetime
                     }
                 }
                 results = mongo.db.users.find_one_and_update(user_id, user)

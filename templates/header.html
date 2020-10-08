@@ -15,13 +15,18 @@
 
 </head>
 <body>
-    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
+    <nav class="navbar navbar-dark sticky-top bg-primary flex-md-nowrap p-0">
       <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">CityBoys</a>
-      <ul class="navbar-nav px-3">
-        <li class="nav-item text-nowrap">
-          <a class="nav-link" href="/logout">Sign out</a>
+      <ul class="navbar-nav px-3 nav-dropdown">
+        <li class="nav-item text-nowrap nav-user-profile">
+          <a class="nav-link" href="#">{{ session['fullname'] }} <img src="/static/icons/arrow-down-left-square.svg" alt="" width="16" height="16" title="User"></a>
+            <div class="nav-dropdown-content">
+                <ul>
+                    <li class="nav-item text-nowrap"><a href="/logout"><img src="/static/icons/door-open.svg" alt="" width="16" height="16" title="User"> Sign Out</a></li>
+                </ul>
+            </div>
         </li>
-      </ul>
+  </ul>
     </nav>
     <div class="container-fluid">
         <div class="row">
