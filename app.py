@@ -35,7 +35,7 @@ def role_check(f):
     return decorated_function
 
 def create_demoadmin():
-    role = 'staff'
+    role = 'Staff'
     fullname = 'Super Admin'
     username = 'superadmin'
     password = '1234'
@@ -58,7 +58,7 @@ def create_demoadmin():
 
 
 def create_demostudent():
-    role = 'student'
+    role = 'Student'
     fullname = 'Demo Student'
     username = 'demostudent'
     password = '1234'
