@@ -331,9 +331,9 @@ def create_channel(message='', alert_type=''):
 
             if channelname and channeldate and starttime and endtime and capacity:
                 try:
-                    date_validation = datetime.strptime(channeldate, "%d/%m/%Y")
-                    starttime_validation = datetime.strptime(starttime, "%H%M")
-                    endtime_validation = datetime.strptime(endtime, "%H%M")
+                    date_validation = datetime.datetime.strptime(channeldate, "%d/%m/%Y")
+                    starttime_validation = datetime.datetime.strptime(starttime, "%H%M")
+                    endtime_validation = datetime.datetime.strptime(endtime, "%H%M")
                 except ValueError:
                     message = 'Invalid Date/Time Format! (dd/mm/yy, HHHH)'
                     alert_type = 'danger'
@@ -391,9 +391,9 @@ def edit_channel(channelid, message='', alert_type=''):
 
             if channelname and channeldate and starttime and endtime and capacity:
                 try:
-                    date_validation = datetime.strptime(channeldate, "%d/%m/%Y")
-                    starttime_validation = datetime.strptime(starttime, "%H%M")
-                    endtime_validation = datetime.strptime(endtime, "%H%M")
+                    date_validation = datetime.datetime.strptime(channeldate, "%d/%m/%Y")
+                    starttime_validation = datetime.datetime.strptime(starttime, "%H%M")
+                    endtime_validation = datetime.datetime.strptime(endtime, "%H%M")
                 except ValueError:
                     message = 'Invalid Date/Time Format! (dd/mm/yy, HHHH)'
                     alert_type = 'danger'
