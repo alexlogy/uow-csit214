@@ -1,0 +1,36 @@
+{% include 'header.html' %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2">Staffs</h1>
+    </div>
+    {% if message %}
+        <div class="alert alert-{{ alert_type }}" role="alert">
+          {{ message }}
+        </div>
+    {% endif %}
+    <form action="" method="post">
+        <div class="form-group">
+            <label for="role">Role</label>
+            <select class="form-control" id="role" name="role" aria-describedby="roleHelp">
+                <option></option>
+                <option>Staff</option>
+                <option>Student</option>
+            </select>
+            <small id="roleHelp" class="form-text text-muted">Please select a role for this user</small>
+        </div>
+        <div class="form-group">
+            <label for="fullname">Full Name</label>
+            <input type="text" name="fullname" class="form-control" id="fullname" aria-describedby="fullNameHelp">
+            <small id="fullNameHelp" class="form-text text-muted">Full Name</small>
+        </div>
+        <div class="form-group">
+            <label for="Username">Username</label>
+            <input type="text" name="username" class="form-control" id="Username" aria-describedby="usernameHelp">
+            <small id="usernameHelp" class="form-text text-muted">Username for login</small>
+        </div>
+        <div class="form-group">
+            <label for="Password">Password</label>
+            <input type="password" name="password" class="form-control" id="Password">
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+{% include 'footer.html' %}
