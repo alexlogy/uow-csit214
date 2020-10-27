@@ -1,0 +1,14 @@
+version: "3"
+services:
+    cityboys:
+        image: cityboys:staging-latest
+        ports:
+          - "5000:5000"
+        networks:
+          - "cityboys"
+    mongodb:
+        image: mongo:latest
+        networks:
+          - "cityboys"
+networks:
+  cityboys:
