@@ -41,8 +41,6 @@
                     {%  if session['role'] == 'Staff' %}
                         <a class="btn btn-warning btn-sm" href="/channels/edit/{{ channel['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Edit</a>
                         <a class="btn btn-danger btn-sm" href="/channels/delete/{{ channel['_id'] }}" role="button"><img src="/static/icons/trash.svg" alt="" width="16" height="16" title="Bootstrap"> Delete</a>
-                    {%  else %}
-                        <a class="btn btn-success btn-sm" href="/sessions/book/{{ channel['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Book</a>
                     {% endif %}
                 </td>
             </tr>
