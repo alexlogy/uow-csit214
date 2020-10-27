@@ -12,14 +12,21 @@ Username: demostudent
 Password: 1234
 ```
 
-##Build Commands
+## Development Environment
+
+### Build Commands (Pre-requisites)
 ```bash
 docker build -f .docker/Dockerfile -t cityboys:staging-latest .
 ```
 
-##Development Environment
+### Docker Compose
+```
+docker-compose -f .docker/docker-compose.yml up -d
+```
+
+### Manual Docker Operations
 ```bash
 docker run -d --name mongodb -p 27017:27017 mongo:latest
 docker run -d --name cityboys -p 5000:5000 cityboys:staging-latest
 ```
-Note: Remember to restrict 27017 port via Firewall to allow only internal for production environment
+`Note: Remember to restrict 27017 port via Firewall to allow only internal for production environment`
