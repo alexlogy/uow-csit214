@@ -8,7 +8,8 @@ import hashlib
 app = Flask(__name__)
 app.secret_key = 'citybois'
 
-app.config["MONGO_URI"] = "mongodb://localhost:27017/cityboys"
+#app.config["MONGO_URI"] = "mongodb://localhost:27017/cityboys"
+app.config["MONGO_URI"] = "mongodb://mongodb:27017/cityboys"
 
 mongo = PyMongo(app)
 
