@@ -1,5 +1,13 @@
 # CityBoys Project (UOW CSIT214)
 
+## Credit
+* jQuery
+* Bootstrap
+* Google Fonts
+* Python Flask
+* PyMongo
+* MongoDB
+
 ## Demo Credentials
 ```
 Role: Staff
