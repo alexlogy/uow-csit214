@@ -412,7 +412,7 @@ def list_sessions(message='', alert_type=''):
             # Only Show Sessions from today onwards
             today_date = datetime.date.today().strftime("%d/%m/%Y")
             search_range = {
-                "channelenddate": {
+                "sessiondate": {
                 "$gte": today_date
                 }
             }
