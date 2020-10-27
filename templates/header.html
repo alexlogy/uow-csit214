@@ -36,31 +36,38 @@
                 <div class="sidebar-sticky">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link" href="#"><img src="/static/icons/card-list.svg" alt="" width="16" height="16" title="Bootstrap"> Sessions</a>
-                            <ul>
-                                <li><a class="nav-link" href="/sessions/list-bookings">List Bookings</a></li>
+                            <a class="nav-link" href="#"><img src="/static/icons/card-list.svg" alt="" width="16" height="16" title="Bootstrap"> Bookings</a>
+                            <ul class="nav-sub-menu">
+                                <li><a class="nav-link" href="/bookings/list">List Bookings</a></li>
                             </ul>
                         </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="#"><img src="/static/icons/card-list.svg" alt="" width="16" height="16" title="Bootstrap"> Channels</a>
-                                <ul>
-                                    {%  if session['role'] == 'Staff' %}
-                                        <li><a class="nav-link" href="/channels/create">Create Channel</a></li>
-                                    {% endif %}
-                                    <li><a class="nav-link" href="/channels/list">List Channels</a></li>
-                                </ul>
-                            </li>
-                            {%  if session['role'] == 'Staff' %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="#"><img src="/static/icons/people.svg" alt="" width="16" height="16" title="Bootstrap"> Users</a>
-                                <ul>
-                                    <li><a class="nav-link" href="/users/create">Create User</a></li>
-                                    <li><a class="nav-link" href="/users/list">List Users</a></li>
-                                </ul>
-                            </li>
-                            {% endif %}
-
+                        <li class="nav-item">
+                            <a class="nav-link" href="#"><img src="/static/icons/card-list.svg" alt="" width="16" height="16" title="Bootstrap"> Sessions</a>
+                            <ul class="nav-sub-menu">
+                                {%  if session['role'] == 'Staff' %}
+                                        <li><a class="nav-link" href="/sessions/create">Create Session</a></li>
+                                {% endif %}
+                                <li><a class="nav-link" href="/sessions/list">List Sessions</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#"><img src="/static/icons/card-list.svg" alt="" width="16" height="16" title="Bootstrap"> Channels</a>
+                            <ul class="nav-sub-menu">
+                                {%  if session['role'] == 'Staff' %}
+                                    <li><a class="nav-link" href="/channels/create">Create Channel</a></li>
+                                {% endif %}
+                                <li><a class="nav-link" href="/channels/list">List Channels</a></li>
+                            </ul>
+                        </li>
+                        {%  if session['role'] == 'Staff' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="#"><img src="/static/icons/people.svg" alt="" width="16" height="16" title="Bootstrap"> Users</a>
+                            <ul class="nav-sub-menu">
+                                <li><a class="nav-link" href="/users/create">Create User</a></li>
+                                <li><a class="nav-link" href="/users/list">List Users</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
                     </ul>
                 </div>
             </div>

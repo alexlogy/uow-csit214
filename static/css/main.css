@@ -103,3 +103,7 @@ html {
 .sidebar .nav-link.active .feather {
   color: inherit;
 }
+
+.nav-sub-menu {
+  padding-inline-start: 25px;
+}

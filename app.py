@@ -34,10 +34,10 @@ def role_check(f):
             return f(*args, **kwargs)
     return decorated_function
 
-def create_demoadmin():
+def create_demostaff():
     role = 'Staff'
-    fullname = 'Super Admin'
-    username = 'superadmin'
+    fullname = 'Demo Staff'
+    username = 'demostaff'
     password = '1234'
 
     now = datetime.datetime.now()
@@ -54,7 +54,7 @@ def create_demoadmin():
         "modified_datetime": created_datetime
     }
     results = mongo.db.users.insert_one(user)
-    print ('Created User superadmin (id: %s)' % results.inserted_id)
+    print ('Created User demostaff (id: %s)' % results.inserted_id)
 
 
 def create_demostudent():
@@ -79,16 +79,31 @@ def create_demostudent():
     results = mongo.db.users.insert_one(user)
     print ('Created User demostudent (id: %s)' % results.inserted_id)
 
+def date_range_generator(startdate, enddate):
+    start_date = datetime.datetime.strptime(startdate, "%d/%m/%Y")
+    end_date = datetime.datetime.strptime(enddate, "%d/%m/%Y")
+
+    generated_dates = []
+
+    for x in range(0, (end_date - start_date).days):
+        date = start_date + datetime.timedelta(days=x)
+        generated_dates.append(date)
+
+    return generated_dates
+
+'''
+Main
+'''
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     '''
     For Demo sake
     '''
-    superadmin = mongo.db.users.find_one({"username": "superadmin"})
+    demostaff = mongo.db.users.find_one({"username": "demostaff"})
     demostudent = mongo.db.users.find_one({"username": "demostudent"})
-    if superadmin is None:
-        create_demoadmin()
+    if demostaff is None:
+        create_demostaff()
     if demostudent is None:
         create_demostudent()
 
@@ -181,9 +196,9 @@ def dashboard(message='', alert_type=''):
 
 
 '''
-Sessions
+Bookings
 '''
-@app.route('/sessions/list-bookings')
+@app.route('/bookings/list')
 @auth_required
 def list_bookings(message='', alert_type=''):
         if request.args.get('message') and request.args.get('alert_type'):
@@ -191,10 +206,221 @@ def list_bookings(message='', alert_type=''):
             alert_type = request.args.get('alert_type')
 
         if session['role'] == 'Student':
-            sessions_list = mongo.db.sessions.aggregate([
+            bookings_list = mongo.db.bookings.aggregate([
                 {
                   "$match": {
                       "booked_by": session['username']
+                  }
+                },
+                {
+                    "$lookup": {
+                        "from": "sessions",
+                        "localField": "sessionid",
+                        "foreignField": "_id",
+                        "as": "session_info"
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "channels",
+                        "localField": "channelid",
+                        "foreignField": "_id",
+                        "as": "channel_info"
+                    }
+                }
+            ])
+
+        else:
+            bookings_cursor = mongo.db.bookings.aggregate([
+                {
+                    "$lookup": {
+                        "from": "sessions",
+                        "localField": "sessionid",
+                        "foreignField": "_id",
+                        "as": "session_info"
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "channels",
+                        "localField": "channelid",
+                        "foreignField": "_id",
+                        "as": "channel_info"
+                    }
+                }
+            ])
+            bookings_list = list(bookings_cursor)
+
+        return render_template('list_bookings.html', message=message, alert_type=alert_type, bookings_list=bookings_list)
+
+@app.route('/booking/create/<sessionid>')
+@auth_required
+def book_session(sessionid, message='', alert_type=''):
+        if request.args.get('message') and request.args.get('alert_type'):
+            message = request.args.get('message')
+            alert_type = request.args.get('alert_type')
+
+        # check for booked session
+        #
+        # channel_details = mongo.db.channels.find_one({"_id": ObjectId(sessionid)})
+        # booking_count = mongo.db.sessions.find(
+        #     {
+        #         "channelid": ObjectId(channelid),
+        #         "status": "Booked"
+        #     }
+        # ).count()
+        #
+        # student_bookcheck = mongo.db.sessions.find(
+        #     {
+        #         "channelid": ObjectId(channelid),
+        #         "booked_by": session['username'],
+        #         "status": "Booked"
+        #     }
+        # ).count()
+
+        session_detail = mongo.db.sessions.find_one({"_id": ObjectId(sessionid)})
+
+        now = datetime.datetime.now()
+        created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+        booked_by = session['username']
+
+        booking_details = {
+            "sessionid": ObjectId(sessionid),
+            "channelid": ObjectId(session_detail['channelid']),
+            "status": "Booked",
+            "booked_by": booked_by,
+            "created_datetime": created_datetime,
+            "modified_datetime": created_datetime
+        }
+        results = mongo.db.bookings.insert_one(booking_details)
+        message = 'Successfully created booking (booking id: %s)' % results.inserted_id
+        alert_type = 'success'
+        return redirect(url_for('list_bookings', message=message, alert_type=alert_type))
+
+
+@app.route('/bookings/cancel/<bookingid>')
+@auth_required
+def cancel_session(bookingid):
+    booking_detail = mongo.db.bookings.find_one({"_id": ObjectId(bookingid)})
+    now = datetime.datetime.now()
+    modified_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+
+    booking_id = {
+        "_id": ObjectId(bookingid)
+    }
+    booking_params = {
+        "$set": {
+            "status": 'Canceled',
+            "canceled_by": session['username'],
+            "modified_datetime": modified_datetime
+        }
+    }
+    results = mongo.db.bookings.find_one_and_update(booking_id, booking_params)
+    message = 'Successfully canceled booking (id: %s)' % results['_id']
+    alert_type = 'success'
+    return redirect(url_for('list_bookings', message=message, alert_type=alert_type))
+
+
+'''
+Sessions
+'''
+@app.route('/sessions/create', methods=['GET', 'POST'])
+@auth_required
+@role_check
+def create_session( message='', alert_type=''):
+        if request.args.get('message') and request.args.get('alert_type'):
+            message = request.args.get('message')
+            alert_type = request.args.get('alert_type')
+
+        if request.method == 'POST':
+            channelid = request.form.get('channelname')
+            sessiondate = request.form.get('sessiondate')
+            sessionstarttime = request.form.get('sessionstarttime')
+            sessionendtime = request.form.get('sessionendtime')
+
+            if channelid == 'none':
+                message = 'Please select an existing channel!'
+                alert_type = 'danger'
+                return render_template('create_session.html', message=message, alert_type=alert_type)
+            if channelid and sessiondate and sessionstarttime and sessionendtime:
+                starttime_validation = datetime.datetime.strptime(sessionstarttime, "%H:%M")
+                endtime_validation = datetime.datetime.strptime(sessionendtime, "%H:%M")
+
+                if starttime_validation < endtime_validation:
+                    channel_detail = mongo.db.channels.find_one(
+                        {
+                            "_id": ObjectId(channelid)
+                        }
+                    )
+                    channel_start_date = channel_detail['channeldate']
+                    channel_end_date = channel_detail['channelenddate']
+
+                    start_date_validation = datetime.datetime.strptime(channel_start_date, "%d/%m/%Y")
+                    end_date_validation = datetime.datetime.strptime(channel_end_date, "%d/%m/%Y")
+                    session_date_validation = datetime.datetime.strptime(sessiondate, "%d/%m/%Y")
+
+                    # Check whether session date is within channel date range
+                    if start_date_validation <= session_date_validation <= end_date_validation:
+                        # Save into Database
+                        now = datetime.datetime.now()
+                        created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+                        created_by = session['username']
+
+                        session_document = {
+                            "channelid": ObjectId(channelid),
+                            "sessiondate": sessiondate,
+                            "sessionstarttime": sessionstarttime,
+                            "sessionendtime": sessionendtime,
+                            "created_by": created_by,
+                            "created_datetime": created_datetime,
+                            "modified_datetime": created_datetime
+                        }
+                        results = mongo.db.sessions.insert_one(session_document)
+                        message = 'Successfully created session (id: %s)' % results.inserted_id
+                        alert_type = 'success'
+                        return redirect(url_for('list_sessions', message=message, alert_type=alert_type))
+                    else:
+                        message = 'Session Date is not within Channel date range!'
+                        alert_type = 'danger'
+                        return redirect(url_for('create_session', message=message, alert_type=alert_type))
+                else:
+                    message = 'Invalid Time Format! (HH:MM)'
+                    alert_type = 'danger'
+                    return redirect(url_for('create_session', message=message, alert_type=alert_type))
+
+        # check for channels
+        channel_count = mongo.db.channels.find().count()
+
+        if channel_count > 0:
+            channel_list = mongo.db.channels.find()
+
+            return render_template('create_session.html', message=message, alert_type=alert_type, channel_list=channel_list)
+        else:
+            message = 'Please create at least 1 channel before creating sessions!'
+            alert_type = 'danger'
+            return redirect(url_for('create_channel', message=message, alert_type=alert_type))
+
+@app.route('/sessions/list')
+@auth_required
+def list_sessions(message='', alert_type=''):
+        if request.args.get('message') and request.args.get('alert_type'):
+            message = request.args.get('message')
+            alert_type = request.args.get('alert_type')
+
+        if session['role'] == 'Student':
+            # Only Show Sessions from today onwards
+            today_date = datetime.date.today().strftime("%d/%m/%Y")
+            search_range = {
+                "channelenddate": {
+                "$gte": today_date
+                }
+            }
+            sessions_list = mongo.db.sessions.aggregate([
+                {
+                  "$match": {
+                      "sessiondate": {
+                            "$gte": today_date
+                        }
                   }
                 },
                 {
@@ -218,79 +444,170 @@ def list_bookings(message='', alert_type=''):
                 }
             ])
 
-        return render_template('list_bookings.html', message=message, alert_type=alert_type, sessions_list=sessions_list)
+        # if session['role'] == 'Student':
+        #     sessions_list = mongo.db.sessions.aggregate([
+        #         {
+        #           "$match": {
+        #               "booked_by": session['username']
+        #           }
+        #         },
+        #         {
+        #             "$lookup": {
+        #                 "from": "channels",
+        #                 "localField": "channelid",
+        #                 "foreignField": "_id",
+        #                 "as": "channel_info"
+        #             }
+        #         }
+        #     ])
+        # else:
+        #     sessions_list = mongo.db.sessions.aggregate([
+        #         {
+        #             "$lookup": {
+        #                 "from": "channels",
+        #                 "localField": "channelid",
+        #                 "foreignField": "_id",
+        #                 "as": "channel_info"
+        #             }
+        #         }
+        #     ])
 
-@app.route('/sessions/book/<channelid>')
+        return render_template('list_sessions.html', message=message, alert_type=alert_type, sessions_list=sessions_list)
+
+@app.route('/sessions/edit/<sessionid>', methods=['GET', 'POST'])
 @auth_required
-def book_session(channelid, message='', alert_type=''):
+@role_check
+def edit_session(sessionid, message='', alert_type=''):
         if request.args.get('message') and request.args.get('alert_type'):
             message = request.args.get('message')
             alert_type = request.args.get('alert_type')
 
-        channel_details = mongo.db.channels.find_one({"_id": ObjectId(channelid)})
-        booking_count = mongo.db.sessions.find(
+        # On POST event
+        if request.method == 'POST':
+            sessionid = request.form.get('sessionid')
+            channelid = request.form.get('channelname')
+            sessiondate = request.form.get('sessiondate')
+            sessionstarttime = request.form.get('sessionstarttime')
+            sessionendtime = request.form.get('sessionendtime')
+
+            if channelid and sessiondate and sessionstarttime and sessionendtime:
+                starttime_validation = datetime.datetime.strptime(sessionstarttime, "%H:%M")
+                endtime_validation = datetime.datetime.strptime(sessionendtime, "%H:%M")
+
+                if starttime_validation < endtime_validation:
+                    channel_detail = mongo.db.channels.find_one(
+                        {
+                            "_id": ObjectId(channelid)
+                        }
+                    )
+                    channel_start_date = channel_detail['channeldate']
+                    channel_end_date = channel_detail['channelenddate']
+
+                    start_date_validation = datetime.datetime.strptime(channel_start_date, "%d/%m/%Y")
+                    end_date_validation = datetime.datetime.strptime(channel_end_date, "%d/%m/%Y")
+                    session_date_validation = datetime.datetime.strptime(sessiondate, "%d/%m/%Y")
+
+                    # Check whether session date is within channel date range
+                    if start_date_validation <= session_date_validation <= end_date_validation:
+                        # Save into Database
+                        now = datetime.datetime.now()
+                        modified_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+                        modified_by = session['username']
+
+                        session_id = {
+                            "_id": ObjectId(sessionid)
+                        }
+
+                        session_document = {
+                            "$set": {
+                                "channelid": ObjectId(channelid),
+                                "sessiondate": sessiondate,
+                                "sessionstarttime": sessionstarttime,
+                                "sessionendtime": sessionendtime,
+                                "modified_datetime": modified_datetime,
+                                "modified_by": modified_by
+                            }
+                        }
+                        results = mongo.db.sessions.find_one_and_update(session_id, session_document)
+                        message = 'Successfully edited session (id: %s)' % results['_id']
+                        alert_type = 'success'
+                        return redirect(url_for('list_sessions', message=message, alert_type=alert_type))
+                    else:
+                        message = 'Session Date is not within Channel date range!'
+                        alert_type = 'danger'
+                        return redirect(url_for('edit_session', message=message, alert_type=alert_type))
+                else:
+                    message = 'Invalid Time Format! (HH:MM)'
+                    alert_type = 'danger'
+                    return redirect(url_for('edit_session', message=message, alert_type=alert_type))
+
+        # Get Session Details from Database
+        session_cursor = mongo.db.sessions.aggregate([
             {
-                "channelid": ObjectId(channelid),
-                "status": "Booked"
-            }
-        ).count()
-
-        student_bookcheck = mongo.db.sessions.find(
+              "$match": {
+                  "_id": ObjectId(sessionid)
+              }
+            },
             {
-                "channelid": ObjectId(channelid),
-                "booked_by": session['username'],
-                "status": "Booked"
-            }
-        ).count()
-
-        if (booking_count < channel_details['capacity']):
-            if (student_bookcheck < 1):
-                now = datetime.datetime.now()
-                created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
-                booked_by = session['username']
-
-                session_details = {
-                    "channelid": ObjectId(channelid),
-                    "status": "Booked",
-                    "booked_by": booked_by,
-                    "created_datetime": created_datetime,
-                    "modified_datetime": created_datetime
+                "$lookup": {
+                    "from": "channels",
+                    "localField": "channelid",
+                    "foreignField": "_id",
+                    "as": "channel_info"
                 }
-                results = mongo.db.sessions.insert_one(session_details)
-                message = 'Successfully created session (session id: %s)' % results.inserted_id
-                alert_type = 'success'
-                return redirect(url_for('list_bookings', message=message, alert_type=alert_type))
-            else:
-                message = 'You have already booked! Please choose another channel to book! (channel id: %s)' % channelid
-                alert_type = 'danger'
-                return redirect(url_for('list_channels', message=message, alert_type=alert_type))
-        else:
-            message = 'Session is fully booked! Please choose another channel! (channel id: %s)' % channelid
-            alert_type = 'danger'
-            return redirect(url_for('list_channels', message=message, alert_type=alert_type))
+            }
+        ])
 
-@app.route('/sessions/cancel/<sessionid>')
+        session_details = list(session_cursor)
+
+        channel_list = mongo.db.channels.find()
+
+        return render_template('edit_session.html', message=message, alert_type=alert_type, session_details=session_details, channel_list=channel_list)
+
+@app.route('/sessions/delete/<sessionid>', methods=['GET', 'POST'])
 @auth_required
-def cancel_session(sessionid):
-    session_detail = mongo.db.sessions.find_one({"_id": ObjectId(sessionid)})
-    now = datetime.datetime.now()
-    modified_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+@role_check
+def delete_session(sessionid, message='', alert_type=''):
+        if request.args.get('message') and request.args.get('alert_type'):
+            message = request.args.get('message')
+            alert_type = request.args.get('alert_type')
 
-    session_id = {
-        "_id": ObjectId(sessionid)
-    }
-    session_params = {
-        "$set": {
-            "status": 'Canceled',
-            "canceled_by": session['username'],
-            "modified_datetime": modified_datetime
-        }
-    }
-    results = mongo.db.sessions.find_one_and_update(session_id, session_params)
-    message = 'Successfully canceled booking (id: %s)' % results['_id']
-    alert_type = 'success'
-    return redirect(url_for('list_bookings', message=message, alert_type=alert_type))
+        # On POST event
+        if request.method == 'POST':
+            sessionid = request.form.get('sessionid')
 
+            if sessionid:
+                session_id = {
+                    "_id": ObjectId(sessionid)
+                }
+
+                results = mongo.db.sessions.find_one_and_delete(session_id)
+                message = 'Successfully deleted session (id: %s)' % results['_id']
+                alert_type = 'success'
+                return redirect(url_for('list_sessions', message=message, alert_type=alert_type))
+
+        # Get Session Details from Database
+        session_cursor = mongo.db.sessions.aggregate([
+            {
+              "$match": {
+                  "_id": ObjectId(sessionid)
+              }
+            },
+            {
+                "$lookup": {
+                    "from": "channels",
+                    "localField": "channelid",
+                    "foreignField": "_id",
+                    "as": "channel_info"
+                }
+            }
+        ])
+
+        session_details = list(session_cursor)
+
+        channel_list = mongo.db.channels.find()
+
+        return render_template('delete_session.html', message=message, alert_type=alert_type, session_details=session_details, channel_list=channel_list)
 
 '''
 Channels
@@ -305,7 +622,7 @@ def list_channels(message='', alert_type=''):
         if session['role'] == 'Student':
             today_date = datetime.date.today().strftime("%d/%m/%Y")
             search_range = {
-                "channeldate": {
+                "channelenddate": {
                 "$gte": today_date
                 }
             }
@@ -338,21 +655,23 @@ def create_channel(message='', alert_type=''):
         if request.method == 'POST':
             channelname = request.form.get('channelname')
             channeldate = request.form.get('channeldate')
-            starttime = request.form.get('starttime')
-            endtime = request.form.get('endtime')
+            channelenddate = request.form.get('channelenddate')
+            # starttime = request.form.get('starttime')
+            # endtime = request.form.get('endtime')
             capacity = int(request.form.get('capacity'))
 
-            if channelname and channeldate and starttime and endtime and capacity:
+            if channelname and channeldate and channelenddate and capacity:
                 try:
                     date_validation = datetime.datetime.strptime(channeldate, "%d/%m/%Y")
-                    starttime_validation = datetime.datetime.strptime(starttime, "%H%M")
-                    endtime_validation = datetime.datetime.strptime(endtime, "%H%M")
+                    enddate_validation = datetime.datetime.strptime(channelenddate, "%d/%m/%Y")
+                    # starttime_validation = datetime.datetime.strptime(starttime, "%H%M")
+                    # endtime_validation = datetime.datetime.strptime(endtime, "%H%M")
                 except ValueError:
                     message = 'Invalid Date/Time Format! (dd/mm/yy, HHHH)'
                     alert_type = 'danger'
                     return redirect(url_for('create_channel', message=message, alert_type=alert_type))
 
-                if (endtime > starttime):
+                if (date_validation < enddate_validation):
                     if (isinstance(capacity, int) and (capacity > 0)):
                         now = datetime.datetime.now()
                         created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
@@ -361,8 +680,7 @@ def create_channel(message='', alert_type=''):
                         channel = {
                             "channelname": channelname,
                             "channeldate": channeldate,
-                            "starttime": starttime,
-                            "endtime": endtime,
+                            "channelenddate": channelenddate,
                             "capacity": capacity,
                             "created_by": created_by,
                             "created_datetime": created_datetime,
@@ -377,7 +695,7 @@ def create_channel(message='', alert_type=''):
                         alert_type = 'danger'
                         return redirect(url_for('create_channel', message=message, alert_type=alert_type))
                 else:
-                    message = 'Invalid Start and End Time'
+                    message = 'Invalid Start and End Date'
                     alert_type = 'danger'
                     return redirect(url_for('create_channel', message=message, alert_type=alert_type))
             else:
@@ -398,53 +716,54 @@ def edit_channel(channelid, message='', alert_type=''):
         if request.method == 'POST':
             channelname = request.form.get('channelname')
             channeldate = request.form.get('channeldate')
-            starttime = request.form.get('starttime')
-            endtime = request.form.get('endtime')
+            channelenddate = request.form.get('channelenddate')
+            # starttime = request.form.get('starttime')
+            # endtime = request.form.get('endtime')
             capacity = int(request.form.get('capacity'))
 
-            if channelname and channeldate and starttime and endtime and capacity:
+            if channelname and channeldate and channelenddate and capacity:
                 try:
                     date_validation = datetime.datetime.strptime(channeldate, "%d/%m/%Y")
-                    starttime_validation = datetime.datetime.strptime(starttime, "%H%M")
-                    endtime_validation = datetime.datetime.strptime(endtime, "%H%M")
+                    enddate_validation = datetime.datetime.strptime(channelenddate, "%d/%m/%Y")
+                    # starttime_validation = datetime.datetime.strptime(starttime, "%H%M")
+                    # endtime_validation = datetime.datetime.strptime(endtime, "%H%M")
                 except ValueError:
                     message = 'Invalid Date/Time Format! (dd/mm/yy, HHHH)'
                     alert_type = 'danger'
                     return redirect(url_for('create_channel', message=message, alert_type=alert_type))
 
-                if (endtime > starttime):
-                    if (isinstance(capacity, int) and (capacity > 0)):
-                        now = datetime.datetime.now()
-                        modified_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
-                        modified_by = session['username']
+                # if (channeldate > channelenddate):
+                if (isinstance(capacity, int) and (capacity > 0)):
+                    now = datetime.datetime.now()
+                    modified_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+                    modified_by = session['username']
 
-                        channel_id = {
-                            "_id": ObjectId(channelid)
-                        }
+                    channel_id = {
+                        "_id": ObjectId(channelid)
+                    }
 
-                        channel = {
-                            "$set": {
-                                "channelname": channelname,
-                                "channeldate": channeldate,
-                                "starttime": starttime,
-                                "endtime": endtime,
-                                "capacity": capacity,
-                                "modified_by": modified_by,
-                                "modified_datetime": modified_datetime
-                            }
+                    channel = {
+                        "$set": {
+                            "channelname": channelname,
+                            "channeldate": channeldate,
+                            "channelenddate": channelenddate,
+                            "capacity": capacity,
+                            "modified_by": modified_by,
+                            "modified_datetime": modified_datetime
                         }
-                        results = mongo.db.channels.find_one_and_update(channel_id, channel)
-                        message = 'Successfully edited channel (id: %s)' % results['_id']
-                        alert_type = 'success'
-                        return redirect(url_for('list_channels', message=message, alert_type=alert_type))
-                    else:
-                        message = 'Invalid Channel Capacity!'
-                        alert_type = 'danger'
-                        return redirect(url_for('edit_channel', message=message, alert_type=alert_type))
+                    }
+                    results = mongo.db.channels.find_one_and_update(channel_id, channel)
+                    message = 'Successfully edited channel (id: %s)' % results['_id']
+                    alert_type = 'success'
+                    return redirect(url_for('list_channels', message=message, alert_type=alert_type))
                 else:
-                    message = 'Invalid Start and End Time'
+                    message = 'Invalid Channel Capacity!'
                     alert_type = 'danger'
                     return redirect(url_for('edit_channel', message=message, alert_type=alert_type))
+                # else:
+                #     message = 'Invalid Start and End Date'
+                #     alert_type = 'danger'
+                #     return redirect(url_for('edit_channel', message=message, alert_type=alert_type))
             else:
                 message = "Please fill in all the fields!"
                 alert_type = 'danger'

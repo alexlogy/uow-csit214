@@ -1,7 +1,7 @@
 {% include 'header.html' %}
     <!-- List Users -->
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
-        <h1 class="h2">Sessions List</h1>
+        <h1 class="h2">Bookings List</h1>
     </div>
     {% if message %}
         <div class="alert alert-{{ alert_type }}" role="alert">
@@ -13,36 +13,34 @@
         <tr>
             <th scope="col">ID #</th>
             <th scope="col">Channel Name</th>
-            <th scope="col">Date</th>
+            <th scope="col">Session Date</th>
             <th scope="col">Start Time</th>
             <th scope="col">End Time</th>
-            <th scope="col">Status</th>
             <th scope="col">Booked By</th>
             <th scope="col">Booked Date</th>
+            <th scope="col">Booking Status</th>
             <th scope="col">Actions</th>
         </tr>
       </thead>
       <tbody>
-        {%  for session_details in sessions_list %}
+        {%  for booking in bookings_list %}
             <tr>
-                <th scope="row">{{ session_details['_id'] }}</th>
-                <td>{{ session_details['channel_info'][0]['channelname'] }}</td>
-                <td>{{ session_details['channel_info'][0]['channeldate'] }}</td>
-                <td>{{ session_details['channel_info'][0]['starttime'] }}hrs</td>
-                <td>{{ session_details['channel_info'][0]['endtime'] }}hrs</td>
-                {% if session_details['status'] == 'Booked' %}
+                <th scope="row">{{ booking['_id'] }}</th>
+                <td>{{ booking['channel_info'][0]['channelname'] }}</td>
+                <td>{{ booking['session_info'][0]['sessiondate'] }}</td>
+                <td>{{ booking['session_info'][0]['sessionstarttime'] }}</td>
+                <td>{{ booking['session_info'][0]['sessionendtime'] }}</td>
+                <td>{{ booking['booked_by'] }}</td>
+                <td>{{ booking['modified_datetime'] }}</td>
+                {% if booking['status'] == 'Booked' %}
                     {% set badgetype = 'success' %}
-                {% elif session_details['status'] == 'Canceled' %}
+                {% elif booking['status'] == 'Canceled' %}
                     {% set badgetype = 'danger' %}
                 {% endif %}
-                <td><span class="badge badge-{{ badgetype }}">{{ session_details['status'] }}</span></td>
-                <td>{{ session_details['booked_by'] }}</td>
-                <td>{{ session_details['modified_datetime'] }}</td>
+                <td><span class="badge badge-{{ badgetype }}">{{ booking['status'] }}</span></td>
                 <td>
-                    {% if (session_details['status'] == 'Canceled' and session['role'] == 'Student') %}
-                        <a class="btn btn-warning btn-sm" href="/sessions/book/{{ session_details['channel_info'][0]['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Re-book</a>
-                    {%  elif (session_details['status'] == 'Booked')  %}
-                        <a class="btn btn-danger btn-sm" href="/sessions/cancel/{{ session_details['_id'] }}" role="button"><img src="/static/icons/trash.svg" alt="" width="16" height="16" title="Bootstrap"> Cancel</a>
+                    {%  if (booking['status'] == 'Booked')  %}
+                        <a class="btn btn-danger btn-sm" href="/bookings/cancel/{{ booking['_id'] }}" role="button"><img src="/static/icons/trash.svg" alt="" width="16" height="16" title="Bootstrap"> Cancel</a>
                     {%  endif %}
                 </td>
             </tr>

@@ -1,0 +1,45 @@
+{% include 'header.html' %}
+
+
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2">Delete Session</h1>
+    </div>
+    {% if message %}
+        <div class="alert alert-{{ alert_type }}" role="alert">
+          {{ message }}
+        </div>
+    {% endif %}
+    <form action="" method="post" id="channel-creation">
+        <div class="form-group">
+            <label for="sessionid">Session ID</label>
+            <input type="text" readOnly name="sessionid" readonly class="form-control" id="sessionid" aria-describedby="sessionIDHelp" value="{{ session_details[0]['_id'] }}">
+            <small id="sessionIDHelp" class="form-text text-muted">Session ID</small>
+        </div>
+        <div class="form-group">
+            <label for="channelname">Channel Name</label>
+            <select readonly class="form-control" id="channelname" name="channelname">
+                {%  for channel in channel_list %}
+                    <option value="{{ channel['_id'] }}" {{ 'selected' if session_details[0]['channelid'] == channel['_id'] else '' }}>{{ channel['channelname'] }}</option>
+                {%  endfor %}
+            </select>
+            <small id="channelnameHelp" class="form-text text-muted">Select a Channel Name</small>
+        </div>
+        <div class="form-group">
+            <label for="sessiondate">Session Date</label>
+            <input type="text" name="sessiondate" readonly class="form-control" id="sessiondate" aria-describedby="sessiondateHelp" value="{{ session_details[0]['sessiondate'] }}">
+            <small id="sessiondateHelp" class="form-text text-muted">Session Date</small>
+        </div>
+        <div class="form-group">
+            <label for="sessionstarttime">Session Start Time</label>
+            <input type="text" name="sessionstarttime" readonly class="form-control" id="sessionstarttime" aria-describedby="sessionstarttimeHelp" value="{{ session_details[0]['sessionstarttime'] }}">
+            <small id="sessionstarttimeHelp" class="form-text text-muted">Session Start Time</small>
+        </div>
+        <div class="form-group">
+            <label for="sessionendtime">Session End Time</label>
+            <input type="text" name="sessionendtime" readonly class="form-control" id="sessionendtime" aria-describedby="sessionendtimeHelp" value="{{ session_details[0]['sessionendtime'] }}">
+            <small id="sessionendtimeHelp" class="form-text text-muted">Session Start Time</small>
+        </div>
+        <a href="/sessions/list"><button type="button" class="btn btn-secondary">Cancel</button></a>
+        <button type="submit" class="btn btn-danger">Confirm Deletion</button>
+    </form>
+{% include 'footer.html' %}

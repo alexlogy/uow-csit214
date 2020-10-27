@@ -1,0 +1,45 @@
+{% include 'header.html' %}
+    <!-- List Users -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2">Sessions List</h1>
+    </div>
+    {% if message %}
+        <div class="alert alert-{{ alert_type }}" role="alert">
+          {{ message }}
+        </div>
+    {% endif %}
+    <table class="table">
+      <thead>
+        <tr>
+            <th scope="col">ID #</th>
+            <th scope="col">Channel Name</th>
+            <th scope="col">Channel Capacity</th>
+            <th scope="col">Session Date</th>
+            <th scope="col">Start Time</th>
+            <th scope="col">End Time</th>
+            <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {%  for session_detail in sessions_list %}
+            <tr>
+                <th scope="row">{{ session_detail['_id'] }}</th>
+                <td>{{ session_detail['channel_info'][0]['channelname'] }}</td>
+                <td>{{ session_detail['channel_info'][0]['capacity'] }}</td>
+                <td>{{ session_detail['sessiondate'] }}</td>
+                <td>{{ session_detail['sessionstarttime'] }}</td>
+                <td>{{ session_detail['sessionendtime'] }}</td>
+                <td>
+                    {%  if session['role'] == 'Staff' %}
+                        <a class="btn btn-warning btn-sm" href="/sessions/edit/{{ session_detail['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Edit</a>
+                        <a class="btn btn-danger btn-sm" href="/sessions/delete/{{ session_detail['_id'] }}" role="button"><img src="/static/icons/trash.svg" alt="" width="16" height="16" title="Bootstrap"> Delete</a>
+                    {%  else %}
+                        <a class="btn btn-success btn-sm" href="/booking/create/{{ session_detail['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Book</a>
+                    {% endif %}
+                </td>
+            </tr>
+
+        {%  endfor %}
+      </tbody>
+    </table>
+{% include 'footer.html' %}

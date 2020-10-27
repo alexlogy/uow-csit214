@@ -13,9 +13,8 @@
         <tr>
             <th scope="col">ID #</th>
             <th scope="col">Channel Name</th>
-            <th scope="col">Date</th>
-            <th scope="col">Start Time</th>
-            <th scope="col">End Time</th>
+            <th scope="col">Start Date</th>
+            <th scope="col">End Date</th>
             <th scope="col">Total Booking</th>
             <th scope="col">Total Capacity</th>
             <th scope="col">Created By</th>
@@ -29,9 +28,12 @@
                 <th scope="row">{{ channel['_id'] }}</th>
                 <td>{{ channel['channelname'] }}</td>
                 <td>{{ channel['channeldate'] }}</td>
-                <td>{{ channel['starttime'] }}hrs</td>
-                <td>{{ channel['endtime'] }}hrs</td>
-                <td>{{ booking_dict[channel['_id']] }}</td>
+                <td>{{ channel['channelenddate'] }}</td>
+                {%  if booking_dict[channel['_id']] %}
+                    <td>{{ booking_dict[channel['_id']] }}</td>
+                {%  else %}
+                    <td>0</td>
+                {% endif %}
                 <td>{{ channel['capacity'] }}</td>
                 <td>{{ channel['created_by'] }}</td>
                 <td>{{ channel['created_datetime'] }}</td>
