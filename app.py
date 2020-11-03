@@ -8,8 +8,7 @@ import hashlib
 app = Flask(__name__)
 app.secret_key = 'citybois'
 
-#app.config["MONGO_URI"] = "mongodb://localhost:27017/cityboys"
-app.config["MONGO_URI"] = "mongodb://mongodb:27017/cityboys"
+app.config["MONGO_URI"] = "mongodb://localhost:27017/cityboys"
 
 mongo = PyMongo(app)
 
@@ -24,16 +23,49 @@ def auth_required(f):
             return f(*args, **kwargs)
     return decorated_function
 
-def role_check(f):
+def staff_role_check(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session['role'] == 'Student':
+        if session['role'] == 'Staff':
+            return f(*args, **kwargs)
+        else:
             message = "You're not authorized to perform this function!"
             alert_type = 'danger'
             return redirect(url_for('dashboard', next=request.url, message=message, alert_type=alert_type))
-        else:
-            return f(*args, **kwargs)
     return decorated_function
+
+def admin_role_check(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session['role'] == 'Admin':
+            return f(*args, **kwargs)
+        else:
+            message = "You're not authorized to perform this function!"
+            alert_type = 'danger'
+            return redirect(url_for('dashboard', next=request.url, message=message, alert_type=alert_type))
+    return decorated_function
+
+def create_useradmin():
+    role = 'Admin'
+    fullname = 'Demo User Admin'
+    username = 'useradmin'
+    password = '1234'
+
+    now = datetime.datetime.now()
+    created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+
+    password = hashlib.md5(password.encode('utf-8')).hexdigest()
+    user = {
+        "role": role,
+        "fullname": fullname,
+        "username": username,
+        "password": password,
+        "created_by": "system",
+        "created_datetime": created_datetime,
+        "modified_datetime": created_datetime
+    }
+    results = mongo.db.users.insert_one(user)
+    print ('Created User useradmin (id: %s)' % results.inserted_id)
 
 def create_demostaff():
     role = 'Staff'
@@ -56,7 +88,6 @@ def create_demostaff():
     }
     results = mongo.db.users.insert_one(user)
     print ('Created User demostaff (id: %s)' % results.inserted_id)
-
 
 def create_demostudent():
     role = 'Student'
@@ -103,10 +134,13 @@ def login():
     '''
     demostaff = mongo.db.users.find_one({"username": "demostaff"})
     demostudent = mongo.db.users.find_one({"username": "demostudent"})
+    useradmin = mongo.db.users.find_one({"username": "useradmin"})
     if demostaff is None:
         create_demostaff()
     if demostudent is None:
         create_demostudent()
+    if useradmin is None:
+        create_useradmin()
 
     message = ''
     alert_type = ''
@@ -327,7 +361,7 @@ Sessions
 '''
 @app.route('/sessions/create', methods=['GET', 'POST'])
 @auth_required
-@role_check
+@staff_role_check
 def create_session( message='', alert_type=''):
         if request.args.get('message') and request.args.get('alert_type'):
             message = request.args.get('message')
@@ -477,7 +511,7 @@ def list_sessions(message='', alert_type=''):
 
 @app.route('/sessions/edit/<sessionid>', methods=['GET', 'POST'])
 @auth_required
-@role_check
+@staff_role_check
 def edit_session(sessionid, message='', alert_type=''):
         if request.args.get('message') and request.args.get('alert_type'):
             message = request.args.get('message')
@@ -567,7 +601,7 @@ def edit_session(sessionid, message='', alert_type=''):
 
 @app.route('/sessions/delete/<sessionid>', methods=['GET', 'POST'])
 @auth_required
-@role_check
+@staff_role_check
 def delete_session(sessionid, message='', alert_type=''):
         if request.args.get('message') and request.args.get('alert_type'):
             message = request.args.get('message')
@@ -647,7 +681,7 @@ def list_channels(message='', alert_type=''):
 
 @app.route('/channels/create', methods=['GET', 'POST'])
 @auth_required
-@role_check
+@staff_role_check
 def create_channel(message='', alert_type=''):
         if request.args.get('message') and request.args.get('alert_type'):
             message = request.args.get('message')
@@ -706,7 +740,7 @@ def create_channel(message='', alert_type=''):
 
 @app.route('/channels/edit/<channelid>', methods=['GET', 'POST'])
 @auth_required
-@role_check
+@staff_role_check
 def edit_channel(channelid, message='', alert_type=''):
         if request.args.get('message') and request.args.get('alert_type'):
             message = request.args.get('message')
@@ -773,7 +807,7 @@ def edit_channel(channelid, message='', alert_type=''):
 
 @app.route('/channels/delete/<channelid>', methods=['GET', 'POST'])
 @auth_required
-@role_check
+@staff_role_check
 def delete_channel(channelid):
         message = ''
         alert_type = ''
@@ -798,7 +832,7 @@ Users
 
 @app.route('/users/list')
 @auth_required
-@role_check
+@admin_role_check
 def list_users(message='', alert_type=''):
         if request.args.get('message') and request.args.get('alert_type'):
             message = request.args.get('message')
@@ -809,7 +843,7 @@ def list_users(message='', alert_type=''):
 
 @app.route('/users/create', methods=['GET', 'POST'])
 @auth_required
-@role_check
+@admin_role_check
 def create_user():
         message = ''
         alert_type = ''
@@ -845,7 +879,7 @@ def create_user():
 
 @app.route('/users/edit/<userid>', methods=['GET', 'POST'])
 @auth_required
-@role_check
+@admin_role_check
 def edit_user(userid):
         message = ''
         alert_type = ''
@@ -891,7 +925,7 @@ def edit_user(userid):
 
 @app.route('/users/delete/<userid>', methods=['GET', 'POST'])
 @auth_required
-@role_check
+@admin_role_check
 def delete_user(userid):
         message = ''
         alert_type = ''

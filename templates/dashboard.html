@@ -8,5 +8,11 @@
           {{ message }}
         </div>
     {% endif %}
+    <div class="card" style="width: 100%;">
+      <div class="card-body">
+        <h5 class="card-title">Welcome {{ session['fullname'] }}</h5>
+        <p class="card-text">Please navigate using the menu on the left.</p>
+      </div>
+    </div>
 
 {% include 'footer.html' %}

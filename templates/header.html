@@ -35,6 +35,15 @@
             <div class="col-md-2 d-none d-md-block bg-light sidebar">
                 <div class="sidebar-sticky">
                     <ul class="nav flex-column">
+                        {%  if session['role'] == 'Admin' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="#"><img src="/static/icons/people.svg" alt="" width="16" height="16" title="Bootstrap"> Users</a>
+                            <ul class="nav-sub-menu">
+                                <li><a class="nav-link" href="/users/create">Create User</a></li>
+                                <li><a class="nav-link" href="/users/list">List Users</a></li>
+                            </ul>
+                        </li>
+                        {% else %}
                         <li class="nav-item">
                             <a class="nav-link" href="#"><img src="/static/icons/card-list.svg" alt="" width="16" height="16" title="Bootstrap"> Bookings</a>
                             <ul class="nav-sub-menu">
@@ -57,14 +66,6 @@
                                     <li><a class="nav-link" href="/channels/create">Create Channel</a></li>
                                 {% endif %}
                                 <li><a class="nav-link" href="/channels/list">List Channels</a></li>
-                            </ul>
-                        </li>
-                        {%  if session['role'] == 'Staff' %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="#"><img src="/static/icons/people.svg" alt="" width="16" height="16" title="Bootstrap"> Users</a>
-                            <ul class="nav-sub-menu">
-                                <li><a class="nav-link" href="/users/create">Create User</a></li>
-                                <li><a class="nav-link" href="/users/list">List Users</a></li>
                             </ul>
                         </li>
                         {% endif %}
