@@ -111,17 +111,63 @@ def create_demostudent():
     results = mongo.db.users.insert_one(user)
     print ('Created User demostudent (id: %s)' % results.inserted_id)
 
-def date_range_generator(startdate, enddate):
-    start_date = datetime.datetime.strptime(startdate, "%d/%m/%Y")
-    end_date = datetime.datetime.strptime(enddate, "%d/%m/%Y")
+def create_demochannel():
+    now = datetime.datetime.now()
+    created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
 
-    generated_dates = []
+    channel = {
+        "channelname": "Demo Channel",
+        "channeldate": "01/11/2020",
+        "channelenddate": "30/11/2020",
+        "capacity": 100,
+        "created_by": "demostaff",
+        "created_datetime": created_datetime,
+        "modified_datetime": created_datetime
+    }
+    results = mongo.db.channels.insert_one(channel)
+    print('Created Channel demochannel (id: %s)' % results.inserted_id)
 
-    for x in range(0, (end_date - start_date).days):
-        date = start_date + datetime.timedelta(days=x)
-        generated_dates.append(date)
+def create_demosession():
+    # Get Demo Channel ID
+    demo_channel_result = mongo.db.channels.find_one({"channelname": "Demo Channel"})
 
-    return generated_dates
+    now = datetime.datetime.now()
+    created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+
+    session_param = {
+        "channelid": ObjectId(demo_channel_result['_id']),
+        "sessiondate": "18/11/2020",
+        "sessionstarttime": "08:00",
+        "sessionendtime": "10:30",
+        "created_by": "demostaff",
+        "created_datetime": created_datetime,
+        "modified_datetime": created_datetime
+    }
+    results = mongo.db.sessions.insert_one(session_param)
+    print('Created Session demosession (id: %s)' % results.inserted_id)
+
+def create_demobooking():
+    # Get Demo Channel ID
+    demo_channel_result = mongo.db.channels.find_one({"channelname": "Demo Channel"})
+    demochannelid = demo_channel_result['_id']
+
+    # Get Demo Session ID
+    demo_session_result = mongo.db.sessions.find_one({'channelid': ObjectId(demochannelid) })
+    demosessionid = demo_session_result['_id']
+
+    now = datetime.datetime.now()
+    created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+
+    booking_param = {
+        "sessionid": ObjectId(demosessionid),
+        "channelid": ObjectId(demochannelid),
+        "status" : "Booked",
+        "booked_by" : "demostudent",
+        "created_datetime": created_datetime,
+        "modified_datetime": created_datetime
+    }
+    results = mongo.db.bookings.insert_one(booking_param)
+    print('Created Booking demobooking (id: %s)' % results.inserted_id)
 
 '''
 Main
@@ -135,12 +181,23 @@ def login():
     demostaff = mongo.db.users.find_one({"username": "demostaff"})
     demostudent = mongo.db.users.find_one({"username": "demostudent"})
     useradmin = mongo.db.users.find_one({"username": "useradmin"})
+    demochannel = mongo.db.channels.find_one({"channelname": "Demo Channel"})
+    demosession = mongo.db.sessions.find_one()
+    demobookings = mongo.db.bookings.find_one()
+
+
     if demostaff is None:
         create_demostaff()
     if demostudent is None:
         create_demostudent()
     if useradmin is None:
         create_useradmin()
+    if demochannel is None:
+        create_demochannel()
+    if demosession is None:
+        create_demosession()
+    if demobookings is None:
+        create_demobooking()
 
     message = ''
     alert_type = ''
@@ -158,12 +215,58 @@ def login():
                     session['role'] = user_details['role']
                     session['fullname'] = user_details['fullname']
                     session['username'] = username
+
+                    # Add Audit Logs
+                    now = datetime.datetime.now()
+                    login_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+
+                    audit_param = {
+                        "type": "Login",
+                        "status": "Success",
+                        "role": session['role'],
+                        "username": username,
+                        "login_time": login_datetime
+                    }
+                    results = mongo.db.audit_logs.insert_one(audit_param)
+                    print('Successful login attempt (username: %s)' % session['username'])
+
+                    # Redirect User to Dashboard
                     return redirect(url_for('dashboard'))
             else:
+                # Add Audit Logs
+                now = datetime.datetime.now()
+                login_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+
+                audit_param = {
+                    "type": "Login",
+                    "status": "Failed",
+                    "role": 'Null',
+                    "username": username,
+                    "login_time": login_datetime
+                }
+                results = mongo.db.audit_logs.insert_one(audit_param)
+                print('Failed login attempt (username: %s)' % username)
+
+                # Redirect to Login Page
                 message = 'Incorrect username or password!'
                 alert_type = 'danger'
                 return render_template('login.html', message=message, alert_type=alert_type)
         else:
+            # Add Audit Logs
+            now = datetime.datetime.now()
+            login_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+
+            audit_param = {
+                "type": "Login",
+                "status": "Failed",
+                "role": 'Null',
+                "username": 'Null',
+                "login_time": login_datetime
+            }
+            results = mongo.db.audit_logs.insert_one(audit_param)
+            print('Failed login attempt (username: <empty>)')
+
+            # Redirect to Login Page
             message = 'Please enter your username and password!'
             alert_type = 'danger'
             return render_template('login.html', message=message, alert_type=alert_type)
@@ -172,6 +275,23 @@ def login():
 
 @app.route('/logout')
 def logout():
+    # Add Audit Logs
+    now = datetime.datetime.now()
+    login_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+
+    userrole = session['role']
+    username = session['username']
+
+    audit_param = {
+        "type": "Logout",
+        "status": "Success",
+        "role": session['role'],
+        "username": username,
+        "login_time": login_datetime
+    }
+    results = mongo.db.audit_logs.insert_one(audit_param)
+    print('Successful Logout attempt (username: %s)' % session['username'])
+
     '''
     Unset Sessions
     '''
@@ -180,6 +300,7 @@ def logout():
     session.pop('fullname')
     session.pop('username')
 
+    # Redirect to Login Page
     return redirect(url_for('login'))
 
 @app.route('/changepassword', methods=['GET', 'POST'])
@@ -296,41 +417,41 @@ def book_session(sessionid, message='', alert_type=''):
             alert_type = request.args.get('alert_type')
 
         # check for booked session
-        #
-        # channel_details = mongo.db.channels.find_one({"_id": ObjectId(sessionid)})
-        # booking_count = mongo.db.sessions.find(
-        #     {
-        #         "channelid": ObjectId(channelid),
-        #         "status": "Booked"
-        #     }
-        # ).count()
-        #
-        # student_bookcheck = mongo.db.sessions.find(
-        #     {
-        #         "channelid": ObjectId(channelid),
-        #         "booked_by": session['username'],
-        #         "status": "Booked"
-        #     }
-        # ).count()
 
-        session_detail = mongo.db.sessions.find_one({"_id": ObjectId(sessionid)})
+        session_details = mongo.db.sessions.find_one({"_id": ObjectId(sessionid)})
+        sessionid = session_details['_id']
+        booking_details = mongo.db.bookings.find_one(
+            {
+                "sessionid": ObjectId(sessionid),
+                "status": "Booked"
+            }
+        )
 
-        now = datetime.datetime.now()
-        created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
-        booked_by = session['username']
+        if booking_details is None:
+            session_detail = mongo.db.sessions.find_one({"_id": ObjectId(sessionid)})
 
-        booking_details = {
-            "sessionid": ObjectId(sessionid),
-            "channelid": ObjectId(session_detail['channelid']),
-            "status": "Booked",
-            "booked_by": booked_by,
-            "created_datetime": created_datetime,
-            "modified_datetime": created_datetime
-        }
-        results = mongo.db.bookings.insert_one(booking_details)
-        message = 'Successfully created booking (booking id: %s)' % results.inserted_id
-        alert_type = 'success'
-        return redirect(url_for('list_bookings', message=message, alert_type=alert_type))
+            now = datetime.datetime.now()
+            created_datetime = now.strftime("%d/%m/%Y %H:%M:%S")
+            booked_by = session['username']
+
+            booking_details = {
+                "sessionid": ObjectId(sessionid),
+                "channelid": ObjectId(session_detail['channelid']),
+                "status": "Booked",
+                "booked_by": booked_by,
+                "created_datetime": created_datetime,
+                "modified_datetime": created_datetime
+            }
+            results = mongo.db.bookings.insert_one(booking_details)
+            message = 'Successfully created booking (booking id: %s)' % results.inserted_id
+            alert_type = 'success'
+            return redirect(url_for('list_bookings', message=message, alert_type=alert_type))
+
+        else:
+            bookingid = booking_details['_id']
+            message = 'You have already made a booking! Please select another session! (booking id: %s)' % bookingid
+            alert_type = 'danger'
+            return redirect(url_for('list_sessions', message=message, alert_type=alert_type))
 
 
 @app.route('/bookings/cancel/<bookingid>')
@@ -465,6 +586,24 @@ def list_sessions(message='', alert_type=''):
                         "foreignField": "_id",
                         "as": "channel_info"
                     }
+                },
+                {
+                    "$lookup": {
+                        "from": "bookings",
+                        "let": {
+                            "_id": "sessionid"
+                        },
+                        "pipeline": [
+                            {
+                                "$match": {
+                                    "$expr": {
+                                        "$eq": ["_id", "sessionid"]
+                                    }
+                                }
+                            }
+                        ],
+                        "as": "booking_info"
+                    }
                 }
             ])
         else:
@@ -506,6 +645,8 @@ def list_sessions(message='', alert_type=''):
         #             }
         #         }
         #     ])
+
+        print (sessions_list.__dict__)
 
         return render_template('list_sessions.html', message=message, alert_type=alert_type, sessions_list=sessions_list)
 

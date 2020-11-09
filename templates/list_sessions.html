@@ -34,7 +34,11 @@
                         <a class="btn btn-warning btn-sm" href="/sessions/edit/{{ session_detail['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Edit</a>
                         <a class="btn btn-danger btn-sm" href="/sessions/delete/{{ session_detail['_id'] }}" role="button"><img src="/static/icons/trash.svg" alt="" width="16" height="16" title="Bootstrap"> Delete</a>
                     {%  else %}
-                        <a class="btn btn-success btn-sm" href="/booking/create/{{ session_detail['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Book</a>
+                        {% if session_detail['booking_info'][0]['status'] == "Booked" %}
+                            <a class="btn btn-danger btn-sm" href="/bookings/cancel/{{ session_detail['booking_info'][0]['_id'] }}" role="button"><img src="/static/icons/trash.svg" alt="" width="16" height="16" title="Bootstrap"> Cancel</a>
+                        {% else %}
+                            <a class="btn btn-success btn-sm" href="/booking/create/{{ session_detail['_id'] }}" role="button"><img src="/static/icons/pencil-square.svg" alt="" width="16" height="16" title="Bootstrap"> Book</a>
+                        {% endif %}
                     {% endif %}
                 </td>
             </tr>
