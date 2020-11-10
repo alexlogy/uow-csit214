@@ -185,7 +185,7 @@ def login():
     demosession = mongo.db.sessions.find_one()
     demobookings = mongo.db.bookings.find_one()
 
-
+    # Create Demo Content
     if demostaff is None:
         create_demostaff()
     if demostudent is None:
@@ -607,6 +607,12 @@ def list_sessions(message='', alert_type=''):
                     }
                 }
             ])
+
+            # booking_count = mongo.db.bookings.find({
+            #     "status": "Booked",
+            #     "booked_by": username
+            # }).count()
+            # print (booking_count)
         else:
             sessions_list = mongo.db.sessions.aggregate([
                 {
