@@ -420,10 +420,12 @@ def book_session(sessionid, message='', alert_type=''):
 
         session_details = mongo.db.sessions.find_one({"_id": ObjectId(sessionid)})
         sessionid = session_details['_id']
+        username = session['username']
         booking_details = mongo.db.bookings.find_one(
             {
                 "sessionid": ObjectId(sessionid),
-                "status": "Booked"
+                "status": "Booked",
+                "booked_by": username
             }
         )
 
@@ -564,6 +566,8 @@ def list_sessions(message='', alert_type=''):
             alert_type = request.args.get('alert_type')
 
         if session['role'] == 'Student':
+            username = session['username']
+
             # Only Show Sessions from today onwards
             today_date = datetime.date.today().strftime("%d/%m/%Y")
             search_range = {
@@ -590,14 +594,11 @@ def list_sessions(message='', alert_type=''):
                 {
                     "$lookup": {
                         "from": "bookings",
-                        "let": {
-                            "_id": "sessionid"
-                        },
                         "pipeline": [
                             {
                                 "$match": {
                                     "$expr": {
-                                        "$eq": ["_id", "sessionid"]
+                                        "$eq": ["$sessions._id", "$bookings.sessionid"]
                                     }
                                 }
                             }
@@ -645,8 +646,6 @@ def list_sessions(message='', alert_type=''):
         #             }
         #         }
         #     ])
-
-        print (sessions_list.__dict__)
 
         return render_template('list_sessions.html', message=message, alert_type=alert_type, sessions_list=sessions_list)
 
@@ -965,6 +964,22 @@ def delete_channel(channelid):
             return redirect(url_for('list_channels', message=message, alert_type=alert_type))
 
         return render_template('delete_channel.html', message=message, alert_type=alert_type, channel=channel_details)
+
+
+'''
+Users
+'''
+
+@app.route('/audit/list')
+@auth_required
+@admin_role_check
+def view_audit_logs(message='', alert_type=''):
+        if request.args.get('message') and request.args.get('alert_type'):
+            message = request.args.get('message')
+            alert_type = request.args.get('alert_type')
+
+        audit_logs = mongo.db.audit_logs.find()
+        return render_template('list_audit_logs.html', message=message, alert_type=alert_type, audit_logs=audit_logs)
 
 
 '''

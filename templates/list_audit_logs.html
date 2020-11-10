@@ -1,0 +1,34 @@
+{% include 'header.html' %}
+    <!-- List Users -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2">Audit Logs</h1>
+    </div>
+    {% if message %}
+        <div class="alert alert-{{ alert_type }}" role="alert">
+          {{ message }}
+        </div>
+    {% endif %}
+    <table class="table">
+      <thead>
+        <tr>
+            <th scope="col">ID #</th>
+            <th scope="col">Type</th>
+            <th scope="col">Username</th>
+            <th scope="col">Role</th>
+            <th scope="col">Login Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {%  for audit in audit_logs %}
+            <tr>
+                <th scope="row">{{ audit['_id'] }}</th>
+                <td>{{ audit['type'] }}</td>
+                <td>{{ audit['username'] }}</td>
+                <td>{{ audit['role'] }}</td>
+                <td>{{ audit['login_time'] }}</td>
+            </tr>
+
+        {%  endfor %}
+      </tbody>
+    </table>
+{% include 'footer.html' %}
