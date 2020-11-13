@@ -594,11 +594,16 @@ def list_sessions(message='', alert_type=''):
                 {
                     "$lookup": {
                         "from": "bookings",
+                        "let": {
+                            "vars": {"session_id": "$_id" }
+                        },
                         "pipeline": [
                             {
                                 "$match": {
+                                    "booked_by": username,
+                                    "canceled_by": {"$exists": False},
                                     "$expr": {
-                                        "$eq": ["$sessions._id", "$bookings.sessionid"]
+                                        "$eq": ["$bookings.sessionid", "$sessions._id"]
                                     }
                                 }
                             }
@@ -608,11 +613,6 @@ def list_sessions(message='', alert_type=''):
                 }
             ])
 
-            # booking_count = mongo.db.bookings.find({
-            #     "status": "Booked",
-            #     "booked_by": username
-            # }).count()
-            # print (booking_count)
         else:
             sessions_list = mongo.db.sessions.aggregate([
                 {
@@ -624,34 +624,6 @@ def list_sessions(message='', alert_type=''):
                     }
                 }
             ])
-
-        # if session['role'] == 'Student':
-        #     sessions_list = mongo.db.sessions.aggregate([
-        #         {
-        #           "$match": {
-        #               "booked_by": session['username']
-        #           }
-        #         },
-        #         {
-        #             "$lookup": {
-        #                 "from": "channels",
-        #                 "localField": "channelid",
-        #                 "foreignField": "_id",
-        #                 "as": "channel_info"
-        #             }
-        #         }
-        #     ])
-        # else:
-        #     sessions_list = mongo.db.sessions.aggregate([
-        #         {
-        #             "$lookup": {
-        #                 "from": "channels",
-        #                 "localField": "channelid",
-        #                 "foreignField": "_id",
-        #                 "as": "channel_info"
-        #             }
-        #         }
-        #     ])
 
         return render_template('list_sessions.html', message=message, alert_type=alert_type, sessions_list=sessions_list)
 
