@@ -19,7 +19,7 @@
             <label for="channelname">Channel Name</label>
             {%  for channel in channel_list %}
                 {%  if session_details[0]['channelid'] == channel['_id'] %}
-                    <input type="text" name="sessiondate" readonly class="form-control" id="sessiondate" aria-describedby="sessiondateHelp" value="{{ channel['channelname'] }}">
+                    <input type="text" name="channelname" readonly class="form-control" id="channelname" aria-describedby="sessiondateHelp" value="{{ channel['channelname'] }}">
                 {% endif %}
             {%  endfor %}
         </div>
