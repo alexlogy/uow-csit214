@@ -17,12 +17,11 @@
         </div>
         <div class="form-group">
             <label for="channelname">Channel Name</label>
-            <select readonly class="form-control" id="channelname" name="channelname">
-                {%  for channel in channel_list %}
-                    <option value="{{ channel['_id'] }}" {{ 'selected' if session_details[0]['channelid'] == channel['_id'] else '' }}>{{ channel['channelname'] }}</option>
-                {%  endfor %}
-            </select>
-            <small id="channelnameHelp" class="form-text text-muted">Select a Channel Name</small>
+            {%  for channel in channel_list %}
+                {%  if session_details[0]['channelid'] == channel['_id'] %}
+                    <input type="text" name="sessiondate" readonly class="form-control" id="sessiondate" aria-describedby="sessiondateHelp" value="{{ channel['channelname'] }}">
+                {% endif %}
+            {%  endfor %}
         </div>
         <div class="form-group">
             <label for="sessiondate">Session Date</label>
