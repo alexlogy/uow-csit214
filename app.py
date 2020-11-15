@@ -303,6 +303,29 @@ def logout():
     # Redirect to Login Page
     return redirect(url_for('login'))
 
+@app.route('/reset')
+def reset_data():
+    '''
+    Reset Data for Demo Purposes
+    '''
+    mongo.db.bookings.drop()
+    mongo.db.sessions.drop()
+    mongo.db.channels.drop()
+    mongo.db.users.drop()
+    mongo.db.audit_logs.drop()
+    print ('All Collections dropped!')
+
+    '''
+    Unset Sessions
+    '''
+    session.pop('id')
+    session.pop('role')
+    session.pop('fullname')
+    session.pop('username')
+
+    # Redirect to Login Page
+    return redirect(url_for('login'))
+
 @app.route('/changepassword', methods=['GET', 'POST'])
 @auth_required
 def change_password():
